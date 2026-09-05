@@ -1,0 +1,443 @@
+// The Top Interview — production data model.
+// Run `npx prisma migrate dev` after changing this file, then
+// `npx prisma generate` (also runs automatically via the postinstall hook).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  EDITOR
+  REPORTER
+  VIDEO_EDITOR
+  PODCAST_MANAGER
+  MODERATOR
+  USER
+}
+
+enum ContentStatus {
+  DRAFT
+  SCHEDULED
+  PUBLISHED
+  UNPUBLISHED
+}
+
+enum ContentLabel {
+  NEWS
+  OPINION
+  SPONSORED
+}
+
+enum FactCheckStatus {
+  VERIFIED
+  UNDER_REVIEW
+  DISPUTED
+}
+
+enum CommentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum SubmissionStatus {
+  PENDING
+  REVIEWED
+  PUBLISHED
+  REJECTED
+}
+
+enum ContactStatus {
+  PENDING
+  RESOLVED
+  SPAM
+}
+
+enum SubmissionSource {
+  PUBLIC_VOICE
+  NEWS_TIP
+}
+
+enum AdPlacement {
+  HEADER
+  IN_ARTICLE
+  SIDEBAR
+  HOMEPAGE
+  VIDEO_PAGE
+  PODCAST_PAGE
+  FOOTER
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  passwordHash  String?
+  role          UserRole  @default(USER)
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  reporterProfile Reporter?
+  comments        Comment[]
+  bookmarks       Bookmark[]
+  notifications   Notification[]
+
+  @@index([role])
+}
+
+model Reporter {
+  id                String   @id @default(cuid())
+  slug              String   @unique
+  name              String
+  designation       String
+  bio               String   @db.Text
+  photo             String
+  twitter           String?
+  instagram         String?
+  email             String?
+  userId            String?  @unique
+  user              User?    @relation(fields: [userId], references: [id])
+  locationId        String?
+  location          City?    @relation(fields: [locationId], references: [id])
+
+  articles      NewsArticle[]
+  groundReports GroundReport[]
+  interviews    Interview[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Category {
+  id       String        @id @default(cuid())
+  slug     String        @unique
+  name     String        @unique
+  articles NewsArticle[]
+
+  createdAt DateTime @default(now())
+}
+
+model Tag {
+  id       String        @id @default(cuid())
+  slug     String        @unique
+  name     String        @unique
+  articles NewsArticle[] @relation("ArticleTags")
+}
+
+model State {
+  id         String @id @default(cuid())
+  slug       String @unique
+  name       String @unique
+  cities     City[]
+
+  createdAt DateTime @default(now())
+}
+
+model City {
+  id      String @id @default(cuid())
+  slug    String @unique
+  name    String
+  stateId String
+  state   State  @relation(fields: [stateId], references: [id])
+
+  articles      NewsArticle[]
+  groundReports GroundReport[]
+  reporters     Reporter[]
+
+  @@unique([stateId, name])
+}
+
+model NewsArticle {
+  id            String           @id @default(cuid())
+  slug          String           @unique
+  headline      String
+  subheadline   String?
+  excerpt       String           @db.Text
+  body          String           @db.Text
+  image         String
+  videoUrl      String?
+  status        ContentStatus    @default(DRAFT)
+  contentLabel  ContentLabel     @default(NEWS)
+  factCheck     FactCheckStatus?
+  isBreaking    Boolean          @default(false)
+  isFeatured    Boolean          @default(false)
+  views         Int              @default(0)
+  readMinutes   Int              @default(3)
+  quoteText        String?
+  quoteAttribution String?
+  keyPoints        Json?
+
+  // Free-text granular location (e.g. "Indira Nagar") shown on the article —
+  // may be finer-grained than the linked city, which is used for the
+  // location-hub browsing pages and filtering.
+  locationLabel String?
+
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+  cityId     String?
+  city       City?    @relation(fields: [cityId], references: [id])
+  reporterId String
+  reporter   Reporter @relation(fields: [reporterId], references: [id])
+  tags       Tag[]    @relation("ArticleTags")
+
+  comments  Comment[]
+  bookmarks Bookmark[]
+
+  publishedAt DateTime?
+  updatedAt   DateTime  @updatedAt
+  createdAt   DateTime  @default(now())
+
+  @@index([categoryId])
+  @@index([status, publishedAt])
+}
+
+model GroundReport {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  headline    String
+  excerpt     String   @db.Text
+  body        String   @db.Text
+  image       String
+  videoUrl    String?
+  duration    String?
+  mapQuery    String
+  status      ContentStatus @default(DRAFT)
+  views       Int      @default(0)
+  locationLabel String?
+
+  cityId     String?
+  city       City?    @relation(fields: [cityId], references: [id])
+  reporterId String
+  reporter   Reporter @relation(fields: [reporterId], references: [id])
+
+  publishedAt DateTime?
+  updatedAt   DateTime  @updatedAt
+  createdAt   DateTime  @default(now())
+
+  @@index([status, publishedAt])
+}
+
+model Guest {
+  id          String      @id @default(cuid())
+  slug        String      @unique
+  name        String
+  designation String
+  category    String
+  photo       String
+  bio         String      @db.Text
+  interviews  Interview[]
+
+  createdAt DateTime @default(now())
+}
+
+model Interview {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  topic       String
+  excerpt     String   @db.Text
+  body        String   @db.Text
+  thumbnail   String
+  videoUrl    String?
+  duration    String
+  category    String
+  status      ContentStatus @default(DRAFT)
+  views       Int      @default(0)
+
+  guestId    String
+  guest      Guest    @relation(fields: [guestId], references: [id])
+  reporterId String
+  reporter   Reporter @relation(fields: [reporterId], references: [id])
+
+  publishedAt DateTime?
+  updatedAt   DateTime  @updatedAt
+  createdAt   DateTime  @default(now())
+
+  @@index([status, publishedAt])
+}
+
+model Podcast {
+  id       String          @id @default(cuid())
+  name     String          @default("The Top Interview Podcasts")
+  slug     String          @unique
+  episodes PodcastEpisode[]
+
+  createdAt DateTime @default(now())
+}
+
+model PodcastEpisode {
+  id               String   @id @default(cuid())
+  slug             String   @unique
+  episodeNumber    Int
+  title            String
+  guestName        String
+  description      String   @db.Text
+  cover            String
+  audioUrl         String
+  duration         String
+  category         String
+  youtubeUrl       String?
+  spotifyUrl       String?
+  applePodcastsUrl String?
+  featured         Boolean       @default(false)
+  status           ContentStatus @default(DRAFT)
+  plays            Int           @default(0)
+
+  podcastId String
+  podcast   Podcast @relation(fields: [podcastId], references: [id])
+
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@unique([podcastId, episodeNumber])
+  @@index([status, publishedAt])
+}
+
+model Video {
+  id          String        @id @default(cuid())
+  slug        String        @unique
+  title       String
+  category    String
+  thumbnail   String
+  youtubeId   String
+  duration    String
+  status      ContentStatus @default(DRAFT)
+  views       Int           @default(0)
+  publishedAt DateTime?
+  createdAt   DateTime      @default(now())
+
+  @@index([status, publishedAt])
+}
+
+model SpecialReport {
+  id          String        @id @default(cuid())
+  slug        String        @unique
+  title       String
+  dek         String        @db.Text
+  image       String
+  location    String
+  chapters    Json
+  timeline    Json
+  status      ContentStatus @default(DRAFT)
+  views       Int           @default(0)
+  publishedAt DateTime?
+  createdAt   DateTime      @default(now())
+
+  @@index([status, publishedAt])
+}
+
+model Comment {
+  id        String        @id @default(cuid())
+  message   String        @db.Text
+  status    CommentStatus @default(PENDING)
+  articleId String
+  article   NewsArticle   @relation(fields: [articleId], references: [id])
+  userId    String?
+  user      User?         @relation(fields: [userId], references: [id])
+  name      String
+  createdAt DateTime      @default(now())
+
+  @@index([articleId, status])
+}
+
+model Bookmark {
+  id        String      @id @default(cuid())
+  userId    String
+  user      User        @relation(fields: [userId], references: [id])
+  articleId String
+  article   NewsArticle @relation(fields: [articleId], references: [id])
+  createdAt DateTime    @default(now())
+
+  @@unique([userId, articleId])
+}
+
+model NewsletterSubscriber {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  subscribedAt DateTime @default(now())
+  isActive     Boolean  @default(true)
+}
+
+model NewsSubmission {
+  id            String           @id @default(cuid())
+  source        SubmissionSource @default(PUBLIC_VOICE)
+  name          String
+  contact       String
+  location      String
+  category      String
+  description   String           @db.Text
+  mediaUrl      String?
+  status        SubmissionStatus @default(PENDING)
+  submittedAt   DateTime         @default(now())
+
+  @@index([status, submittedAt])
+}
+
+model ContactSubmission {
+  id          String        @id @default(cuid())
+  name        String
+  email       String
+  department  String
+  message     String        @db.Text
+  status      ContactStatus @default(PENDING)
+  submittedAt DateTime      @default(now())
+
+  @@index([status, submittedAt])
+}
+
+model Advertisement {
+  id          String      @id @default(cuid())
+  name        String
+  placement   AdPlacement
+  creativeUrl String?
+  targetUrl   String?
+  isActive    Boolean     @default(false)
+  startDate   DateTime?
+  endDate     DateTime?
+  impressions Int         @default(0)
+  clicks      Int         @default(0)
+  createdAt   DateTime    @default(now())
+
+  @@index([placement, isActive])
+}
+
+model SocialLink {
+  id       String @id @default(cuid())
+  platform String @unique
+  url      String
+  isActive Boolean @default(true)
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  title     String
+  body      String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model SiteSetting {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String @db.Text
+}
+
+model AnalyticsEvent {
+  id         String   @id @default(cuid())
+  eventType  String
+  path       String
+  device     String?
+  location   String?
+  occurredAt DateTime @default(now())
+
+  @@index([eventType, occurredAt])
+}
