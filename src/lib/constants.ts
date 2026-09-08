@@ -11,7 +11,35 @@ export const SITE = {
   phone: "+91 98765 43210",
   whatsapp: "+91 98765 43210",
   address: "4th Floor, Press Enclave, Vidhan Sabha Marg, Lucknow, Uttar Pradesh 226001, India",
+  workingHours: "Monday – Saturday, 10:00 AM – 7:00 PM IST",
 };
+
+export const DEPARTMENTS = [
+  {
+    key: "editorial",
+    label: "Editorial Team",
+    description: "News, ground reports, stories, corrections and reporting.",
+    department: "News Tip",
+  },
+  {
+    key: "podcast",
+    label: "Podcast Team",
+    description: "Podcast guests, interviews and collaborations.",
+    department: "Podcast",
+  },
+  {
+    key: "advertising",
+    label: "Advertising Team",
+    description: "Advertisements, sponsorships and partnerships.",
+    department: "Advertising",
+  },
+  {
+    key: "careers",
+    label: "Careers Team",
+    description: "Jobs, internships and freelance opportunities.",
+    department: "Careers",
+  },
+] as const;
 
 export const MAIN_NAV = [
   { label: "Home", href: "/" },
@@ -89,8 +117,14 @@ export const POPULAR_SEARCHES = [
 export const CONTACT_DEPARTMENTS = [
   "General Enquiry",
   "News Tip",
+  "Ground Report",
+  "Interview Request",
+  "Podcast",
   "Advertising",
   "Partnership",
-  "Press/Media",
   "Careers",
+  "Press / Media",
+  "Feedback",
+  "Correction",
+  "Other",
 ] as const;
