@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Trash2 } from "lucide-react";
+import { Trash2, Pencil } from "lucide-react";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { AdminModal } from "@/components/admin/admin-modal";
 import { StatusPill } from "@/components/admin/status-pill";
@@ -13,9 +13,13 @@ interface Row {
   id: string;
   slug: string;
   topic: string;
+  excerpt: string;
+  body: string;
+  thumbnail: string;
   category: string;
   status: string;
   createdAt: string;
+  reporterId: string;
   guest: { name: string };
   reporter: { name: string };
 }
@@ -32,17 +36,54 @@ export function InterviewsTable({
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
+  const [editing, setEditing] = useState<Row | null>(null);
   const [error, setError] = useState("");
   const filtered = interviews.filter((r) => r.topic.toLowerCase().includes(search.toLowerCase()));
 
-  async function handleCreate(formData: FormData) {
-    const guestName = String(formData.get("guestName") || "").trim();
-    const guestDesignation = String(formData.get("guestDesignation") || "").trim();
+  function openCreate() {
+    setEditing(null);
+    setError("");
+    setModalOpen(true);
+  }
+
+  function openEdit(interview: Row) {
+    setEditing(interview);
+    setError("");
+    setModalOpen(true);
+  }
+
+  async function handleSubmit(formData: FormData) {
     const topic = String(formData.get("topic") || "").trim();
     const category = String(formData.get("category") || "");
     const reporterId = String(formData.get("reporterId") || "");
     const excerpt = String(formData.get("excerpt") || "").trim();
     const body = String(formData.get("body") || "").trim();
+
+    if (editing) {
+      if (!topic || !reporterId || excerpt.length < 10 || body.length < 20) {
+        setError("Please fill in topic, reporter, excerpt (10+ chars) and body (20+ chars).");
+        return;
+      }
+      setError("");
+      const thumbnail = String(formData.get("thumbnail") || "").trim() || editing.thumbnail;
+      const res = await fetch(`/api/interviews/${editing.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ topic, category, reporterId, excerpt, body, thumbnail }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        setError(json.error || "Failed to update interview.");
+        return;
+      }
+      setModalOpen(false);
+      setEditing(null);
+      router.refresh();
+      return;
+    }
+
+    const guestName = String(formData.get("guestName") || "").trim();
+    const guestDesignation = String(formData.get("guestDesignation") || "").trim();
     if (!guestName || !guestDesignation || !topic || !reporterId || excerpt.length < 10 || body.length < 20) {
       setError("Please fill in every field. Excerpt needs 10+ characters, body needs 20+.");
       return;
@@ -92,7 +133,7 @@ export function InterviewsTable({
 
   return (
     <div>
-      <AdminPageHeader search={search} onSearchChange={setSearch} onAdd={() => setModalOpen(true)} addLabel="New Interview" />
+      <AdminPageHeader search={search} onSearchChange={setSearch} onAdd={openCreate} addLabel="New Interview" />
       <div className="overflow-x-auto rounded-lg border border-border">
         <table className="w-full min-w-190 text-sm">
           <thead className="bg-surface-muted text-left text-xs font-bold uppercase tracking-wide text-muted">
@@ -117,10 +158,19 @@ export function InterviewsTable({
                   </button>
                 </td>
                 <td className="px-4 py-2.5 text-muted">{formatDate(r.createdAt)}</td>
-                <td className="px-4 py-2.5 text-right">
-                  <button onClick={() => remove(r.id)} className="ml-auto flex h-8 w-8 items-center justify-center rounded-md border border-border transition hover:border-brand hover:text-brand">
-                    <Trash2 size={14} />
-                  </button>
+                <td className="px-4 py-2.5">
+                  <div className="flex items-center justify-end gap-2">
+                    <button
+                      onClick={() => openEdit(r)}
+                      aria-label={`Edit ${r.topic}`}
+                      className="flex h-8 w-8 items-center justify-center rounded-md border border-border transition hover:border-brand hover:text-brand"
+                    >
+                      <Pencil size={14} />
+                    </button>
+                    <button onClick={() => remove(r.id)} aria-label={`Delete ${r.topic}`} className="flex h-8 w-8 items-center justify-center rounded-md border border-border transition hover:border-brand hover:text-brand">
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -128,26 +178,39 @@ export function InterviewsTable({
         </table>
       </div>
 
-      <AdminModal open={modalOpen} onClose={() => setModalOpen(false)} title="New Interview">
-        <form action={handleCreate} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">Guest Name</label>
-              <input name="guestName" required className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
+      <AdminModal
+        open={modalOpen}
+        onClose={() => {
+          setModalOpen(false);
+          setEditing(null);
+        }}
+        title={editing ? "Edit Interview" : "New Interview"}
+      >
+        <form key={editing?.id ?? "new"} action={handleSubmit} className="space-y-4">
+          {editing ? (
+            <p className="rounded-sm bg-surface-muted px-3 py-2 text-sm">
+              Guest: <span className="font-semibold">{editing.guest.name}</span> (guest identity isn&apos;t editable here)
+            </p>
+          ) : (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">Guest Name</label>
+                <input name="guestName" required className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">Guest Designation</label>
+                <input name="guestDesignation" required className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
+              </div>
             </div>
-            <div>
-              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">Guest Designation</label>
-              <input name="guestDesignation" required className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
-            </div>
-          </div>
+          )}
           <div>
             <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">Topic</label>
-            <input name="topic" required className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
+            <input name="topic" required defaultValue={editing?.topic} className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">Category</label>
-              <select name="category" defaultValue={categories[0]} className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand">
+              <select name="category" defaultValue={editing?.category ?? categories[0]} className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand">
                 {categories.map((c) => (
                   <option key={c} value={c}>
                     {c}
@@ -157,7 +220,7 @@ export function InterviewsTable({
             </div>
             <div>
               <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">Reporter</label>
-              <select name="reporterId" required defaultValue="" className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand">
+              <select name="reporterId" required defaultValue={editing?.reporterId ?? ""} className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand">
                 <option value="" disabled>
                   Select
                 </option>
@@ -171,15 +234,21 @@ export function InterviewsTable({
           </div>
           <div>
             <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">Excerpt</label>
-            <textarea name="excerpt" required rows={2} className="w-full resize-none rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
+            <textarea name="excerpt" required rows={2} defaultValue={editing?.excerpt} className="w-full resize-none rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
           </div>
           <div>
             <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">Body</label>
-            <textarea name="body" required rows={5} className="w-full resize-none rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
+            <textarea name="body" required rows={5} defaultValue={editing?.body} className="w-full resize-none rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
           </div>
+          {editing && (
+            <div>
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">Thumbnail URL</label>
+              <input name="thumbnail" type="url" defaultValue={editing.thumbnail} className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
+            </div>
+          )}
           {error && <p className="text-sm text-brand">{error}</p>}
           <button type="submit" className="w-full rounded-sm bg-brand py-2.5 text-sm font-bold uppercase tracking-wide text-white transition hover:bg-brand-dark">
-            Save Interview
+            {editing ? "Save Changes" : "Save Interview"}
           </button>
         </form>
       </AdminModal>

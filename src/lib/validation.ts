@@ -153,6 +153,20 @@ export const reporterSchema = z.object({
 });
 export const reporterUpdateSchema = reporterSchema.partial().extend({ slug: slugField.optional() });
 
+export const teamMemberSchema = z.object({
+  name: z.string().min(2).max(150),
+  designation: z.string().min(2).max(150),
+  bio: z.string().min(10).max(2000),
+  photo: z.string().url(),
+  twitter: z.string().url().optional().nullable(),
+  instagram: z.string().url().optional().nullable(),
+  facebook: z.string().url().optional().nullable(),
+  linkedin: z.string().url().optional().nullable(),
+  isActive: z.boolean().default(true),
+  displayOrder: z.coerce.number().int().min(0).max(9999).default(0),
+});
+export const teamMemberUpdateSchema = teamMemberSchema.partial();
+
 export const userCreateSchema = z.object({
   name: z.string().min(2).max(150),
   email: z.string().email(),

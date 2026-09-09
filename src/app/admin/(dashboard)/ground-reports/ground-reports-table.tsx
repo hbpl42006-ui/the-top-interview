@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Trash2, MapPin } from "lucide-react";
+import { Trash2, MapPin, Pencil } from "lucide-react";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { AdminModal } from "@/components/admin/admin-modal";
 import { StatusPill } from "@/components/admin/status-pill";
@@ -12,9 +12,14 @@ interface Row {
   id: string;
   slug: string;
   headline: string;
+  excerpt: string;
+  body: string;
+  image: string;
+  mapQuery: string;
   status: string;
   publishedAt: string | null;
   createdAt: string;
+  reporterId: string;
   reporter: { name: string };
   city: { name: string } | null;
 }
@@ -29,10 +34,23 @@ export function GroundReportsTable({
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
+  const [editing, setEditing] = useState<Row | null>(null);
   const [error, setError] = useState("");
   const filtered = reports.filter((r) => r.headline.toLowerCase().includes(search.toLowerCase()));
 
-  async function handleCreate(formData: FormData) {
+  function openCreate() {
+    setEditing(null);
+    setError("");
+    setModalOpen(true);
+  }
+
+  function openEdit(report: Row) {
+    setEditing(report);
+    setError("");
+    setModalOpen(true);
+  }
+
+  async function handleSubmit(formData: FormData) {
     const headline = String(formData.get("headline") || "").trim();
     const location = String(formData.get("location") || "").trim();
     const reporterId = String(formData.get("reporterId") || "");
@@ -43,6 +61,25 @@ export function GroundReportsTable({
       return;
     }
     setError("");
+
+    if (editing) {
+      const image = String(formData.get("image") || "").trim() || editing.image;
+      const res = await fetch(`/api/ground-reports/${editing.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ headline, excerpt, body, image, mapQuery: location || headline, reporterId }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        setError(json.error || "Failed to update ground report.");
+        return;
+      }
+      setModalOpen(false);
+      setEditing(null);
+      router.refresh();
+      return;
+    }
+
     const res = await fetch("/api/ground-reports", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -84,7 +121,7 @@ export function GroundReportsTable({
 
   return (
     <div>
-      <AdminPageHeader search={search} onSearchChange={setSearch} onAdd={() => setModalOpen(true)} addLabel="New Ground Report" />
+      <AdminPageHeader search={search} onSearchChange={setSearch} onAdd={openCreate} addLabel="New Ground Report" />
       <div className="overflow-x-auto rounded-lg border border-border">
         <table className="w-full min-w-[760px] text-sm">
           <thead className="bg-surface-muted text-left text-xs font-bold uppercase tracking-wide text-muted">
@@ -113,13 +150,23 @@ export function GroundReportsTable({
                   </button>
                 </td>
                 <td className="px-4 py-2.5 text-muted">{formatDate(r.createdAt)}</td>
-                <td className="px-4 py-2.5 text-right">
-                  <button
-                    onClick={() => remove(r.id)}
-                    className="ml-auto flex h-8 w-8 items-center justify-center rounded-md border border-border transition hover:border-brand hover:text-brand"
-                  >
-                    <Trash2 size={14} />
-                  </button>
+                <td className="px-4 py-2.5">
+                  <div className="flex items-center justify-end gap-2">
+                    <button
+                      onClick={() => openEdit(r)}
+                      aria-label={`Edit ${r.headline}`}
+                      className="flex h-8 w-8 items-center justify-center rounded-md border border-border transition hover:border-brand hover:text-brand"
+                    >
+                      <Pencil size={14} />
+                    </button>
+                    <button
+                      onClick={() => remove(r.id)}
+                      aria-label={`Delete ${r.headline}`}
+                      className="flex h-8 w-8 items-center justify-center rounded-md border border-border transition hover:border-brand hover:text-brand"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -127,19 +174,26 @@ export function GroundReportsTable({
         </table>
       </div>
 
-      <AdminModal open={modalOpen} onClose={() => setModalOpen(false)} title="New Ground Report">
-        <form action={handleCreate} className="space-y-4">
+      <AdminModal
+        open={modalOpen}
+        onClose={() => {
+          setModalOpen(false);
+          setEditing(null);
+        }}
+        title={editing ? "Edit Ground Report" : "New Ground Report"}
+      >
+        <form key={editing?.id ?? "new"} action={handleSubmit} className="space-y-4">
           <div>
             <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">Headline</label>
-            <input name="headline" required className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
+            <input name="headline" required defaultValue={editing?.headline} className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
           </div>
           <div>
             <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">Location</label>
-            <input name="location" placeholder="e.g. Indira Nagar, Lucknow" className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
+            <input name="location" placeholder="e.g. Indira Nagar, Lucknow" defaultValue={editing?.mapQuery} className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
           </div>
           <div>
             <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">Reporter</label>
-            <select name="reporterId" required defaultValue="" className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand">
+            <select name="reporterId" required defaultValue={editing?.reporterId ?? ""} className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand">
               <option value="" disabled>
                 Select a reporter
               </option>
@@ -152,15 +206,21 @@ export function GroundReportsTable({
           </div>
           <div>
             <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">Excerpt</label>
-            <textarea name="excerpt" required rows={2} className="w-full resize-none rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
+            <textarea name="excerpt" required rows={2} defaultValue={editing?.excerpt} className="w-full resize-none rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
           </div>
           <div>
             <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">Body</label>
-            <textarea name="body" required rows={5} className="w-full resize-none rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
+            <textarea name="body" required rows={5} defaultValue={editing?.body} className="w-full resize-none rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
           </div>
+          {editing && (
+            <div>
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">Image URL</label>
+              <input name="image" type="url" defaultValue={editing.image} className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
+            </div>
+          )}
           {error && <p className="text-sm text-brand">{error}</p>}
           <button type="submit" className="w-full rounded-sm bg-brand py-2.5 text-sm font-bold uppercase tracking-wide text-white transition hover:bg-brand-dark">
-            Save Ground Report
+            {editing ? "Save Changes" : "Save Ground Report"}
           </button>
         </form>
       </AdminModal>

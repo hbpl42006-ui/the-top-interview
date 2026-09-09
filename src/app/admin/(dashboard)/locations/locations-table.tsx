@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Trash2 } from "lucide-react";
+import { Trash2, Pencil } from "lucide-react";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { AdminModal } from "@/components/admin/admin-modal";
 import { slugify } from "@/lib/utils";
@@ -12,17 +12,48 @@ export function LocationsTable({ states }: { states: StateInfo[] }) {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
+  const [editing, setEditing] = useState<StateInfo | null>(null);
   const [error, setError] = useState("");
   const filtered = states.filter((s) => s.name.toLowerCase().includes(search.toLowerCase()));
 
-  async function handleCreate(formData: FormData) {
+  function openCreate() {
+    setEditing(null);
+    setError("");
+    setModalOpen(true);
+  }
+
+  function openEdit(state: StateInfo) {
+    setEditing(state);
+    setError("");
+    setModalOpen(true);
+  }
+
+  async function handleSubmit(formData: FormData) {
     const name = String(formData.get("name") || "").trim();
+    if (!name) return;
+    setError("");
+
+    if (editing) {
+      const res = await fetch(`/api/locations/${editing.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        setError(json.error || "Failed to update state.");
+        return;
+      }
+      setModalOpen(false);
+      setEditing(null);
+      router.refresh();
+      return;
+    }
+
     const cities = String(formData.get("cities") || "")
       .split(",")
       .map((c) => c.trim())
       .filter(Boolean);
-    if (!name) return;
-    setError("");
     const res = await fetch("/api/locations", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -44,7 +75,7 @@ export function LocationsTable({ states }: { states: StateInfo[] }) {
 
   return (
     <div>
-      <AdminPageHeader search={search} onSearchChange={setSearch} onAdd={() => setModalOpen(true)} addLabel="New State" />
+      <AdminPageHeader search={search} onSearchChange={setSearch} onAdd={openCreate} addLabel="New State" />
       <div className="overflow-x-auto rounded-lg border border-border">
         <table className="w-full min-w-[600px] text-sm">
           <thead className="bg-surface-muted text-left text-xs font-bold uppercase tracking-wide text-muted">
@@ -63,7 +94,14 @@ export function LocationsTable({ states }: { states: StateInfo[] }) {
                 <td className="px-4 py-2.5 text-muted">{s.storyCount}</td>
                 <td className="px-4 py-2.5">
                   <div className="flex justify-end gap-2">
-                    <button onClick={() => remove(s.id)} className="flex h-8 w-8 items-center justify-center rounded-md border border-border transition hover:border-brand hover:text-brand">
+                    <button
+                      onClick={() => openEdit(s)}
+                      aria-label={`Edit ${s.name}`}
+                      className="flex h-8 w-8 items-center justify-center rounded-md border border-border transition hover:border-brand hover:text-brand"
+                    >
+                      <Pencil size={14} />
+                    </button>
+                    <button onClick={() => remove(s.id)} aria-label={`Delete ${s.name}`} className="flex h-8 w-8 items-center justify-center rounded-md border border-border transition hover:border-brand hover:text-brand">
                       <Trash2 size={14} />
                     </button>
                   </div>
@@ -74,19 +112,31 @@ export function LocationsTable({ states }: { states: StateInfo[] }) {
         </table>
       </div>
 
-      <AdminModal open={modalOpen} onClose={() => setModalOpen(false)} title="New State">
-        <form action={handleCreate} className="space-y-4">
+      <AdminModal
+        open={modalOpen}
+        onClose={() => {
+          setModalOpen(false);
+          setEditing(null);
+        }}
+        title={editing ? "Edit State" : "New State"}
+      >
+        <form key={editing?.id ?? "new"} action={handleSubmit} className="space-y-4">
           <div>
             <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">State Name</label>
-            <input name="name" required className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
+            <input name="name" required defaultValue={editing?.name} className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
           </div>
-          <div>
-            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">Cities (comma-separated)</label>
-            <input name="cities" placeholder="City A, City B, City C" className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
-          </div>
+          {!editing && (
+            <div>
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">Cities (comma-separated)</label>
+              <input name="cities" placeholder="City A, City B, City C" className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
+            </div>
+          )}
+          {editing && (
+            <p className="text-xs text-muted">Cities for this state can&apos;t be edited here yet — only the state name.</p>
+          )}
           {error && <p className="text-sm text-brand">{error}</p>}
           <button type="submit" className="w-full rounded-sm bg-brand py-2.5 text-sm font-bold uppercase tracking-wide text-white transition hover:bg-brand-dark">
-            Save State
+            {editing ? "Save Changes" : "Save State"}
           </button>
         </form>
       </AdminModal>

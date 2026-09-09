@@ -116,6 +116,25 @@ model Reporter {
   updatedAt DateTime @updatedAt
 }
 
+model TeamMember {
+  id           String   @id @default(cuid())
+  name         String
+  designation  String
+  bio          String   @db.Text
+  photo        String
+  twitter      String?
+  instagram    String?
+  facebook     String?
+  linkedin     String?
+  isActive     Boolean  @default(true)
+  displayOrder Int      @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, displayOrder])
+}
+
 model Category {
   id       String        @id @default(cuid())
   slug     String        @unique

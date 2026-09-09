@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Eye, Trash2, Star, Radio } from "lucide-react";
+import { Eye, Trash2, Star, Radio, Pencil } from "lucide-react";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { AdminModal } from "@/components/admin/admin-modal";
 import { StatusPill } from "@/components/admin/status-pill";
@@ -12,10 +12,15 @@ interface Row {
   id: string;
   slug: string;
   headline: string;
+  excerpt: string;
+  body: string;
+  image: string;
   status: string;
   isBreaking: boolean;
   isFeatured: boolean;
   createdAt: string;
+  categoryId: string;
+  reporterId: string;
   category: { name: string };
   reporter: { name: string };
 }
@@ -32,10 +37,23 @@ export function NewsTable({
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
+  const [editing, setEditing] = useState<Row | null>(null);
   const [error, setError] = useState("");
   const filtered = articles.filter((a) => a.headline.toLowerCase().includes(search.toLowerCase()));
 
-  async function handleCreate(formData: FormData) {
+  function openCreate() {
+    setEditing(null);
+    setError("");
+    setModalOpen(true);
+  }
+
+  function openEdit(article: Row) {
+    setEditing(article);
+    setError("");
+    setModalOpen(true);
+  }
+
+  async function handleSubmit(formData: FormData) {
     const headline = String(formData.get("headline") || "").trim();
     const categoryId = String(formData.get("categoryId") || "");
     const reporterId = String(formData.get("reporterId") || "");
@@ -47,6 +65,25 @@ export function NewsTable({
       return;
     }
     setError("");
+
+    if (editing) {
+      const image = String(formData.get("image") || "").trim() || editing.image;
+      const res = await fetch(`/api/news/${editing.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ headline, excerpt, body, image, categoryId, reporterId, status }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        setError(json.error || "Failed to update article.");
+        return;
+      }
+      setModalOpen(false);
+      setEditing(null);
+      router.refresh();
+      return;
+    }
+
     const res = await fetch("/api/news", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -98,7 +135,7 @@ export function NewsTable({
 
   return (
     <div>
-      <AdminPageHeader search={search} onSearchChange={setSearch} onAdd={() => setModalOpen(true)} addLabel="New Article" />
+      <AdminPageHeader search={search} onSearchChange={setSearch} onAdd={openCreate} addLabel="New Article" />
 
       <div className="overflow-x-auto rounded-lg border border-border">
         <table className="w-full min-w-215 text-sm">
@@ -154,7 +191,14 @@ export function NewsTable({
                     >
                       <Eye size={14} />
                     </a>
-                    <button onClick={() => remove(r.id)} className="flex h-8 w-8 items-center justify-center rounded-md border border-border transition hover:border-brand hover:text-brand">
+                    <button
+                      onClick={() => openEdit(r)}
+                      aria-label={`Edit ${r.headline}`}
+                      className="flex h-8 w-8 items-center justify-center rounded-md border border-border transition hover:border-brand hover:text-brand"
+                    >
+                      <Pencil size={14} />
+                    </button>
+                    <button onClick={() => remove(r.id)} aria-label={`Delete ${r.headline}`} className="flex h-8 w-8 items-center justify-center rounded-md border border-border transition hover:border-brand hover:text-brand">
                       <Trash2 size={14} />
                     </button>
                   </div>
@@ -172,16 +216,23 @@ export function NewsTable({
         </table>
       </div>
 
-      <AdminModal open={modalOpen} onClose={() => setModalOpen(false)} title="New Article">
-        <form action={handleCreate} className="space-y-4">
+      <AdminModal
+        open={modalOpen}
+        onClose={() => {
+          setModalOpen(false);
+          setEditing(null);
+        }}
+        title={editing ? "Edit Article" : "New Article"}
+      >
+        <form key={editing?.id ?? "new"} action={handleSubmit} className="space-y-4">
           <div>
             <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">Headline</label>
-            <input name="headline" required className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
+            <input name="headline" required defaultValue={editing?.headline} className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">Category</label>
-              <select name="categoryId" required defaultValue="" className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand">
+              <select name="categoryId" required defaultValue={editing?.categoryId ?? ""} className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand">
                 <option value="" disabled>
                   Select
                 </option>
@@ -194,7 +245,7 @@ export function NewsTable({
             </div>
             <div>
               <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">Reporter</label>
-              <select name="reporterId" required defaultValue="" className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand">
+              <select name="reporterId" required defaultValue={editing?.reporterId ?? ""} className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand">
                 <option value="" disabled>
                   Select
                 </option>
@@ -208,15 +259,21 @@ export function NewsTable({
           </div>
           <div>
             <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">Excerpt</label>
-            <textarea name="excerpt" required rows={2} className="w-full resize-none rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
+            <textarea name="excerpt" required rows={2} defaultValue={editing?.excerpt} className="w-full resize-none rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
           </div>
           <div>
             <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">Body</label>
-            <textarea name="body" required rows={6} className="w-full resize-none rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
+            <textarea name="body" required rows={6} defaultValue={editing?.body} className="w-full resize-none rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
           </div>
+          {editing && (
+            <div>
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">Image URL</label>
+              <input name="image" type="url" defaultValue={editing.image} className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
+            </div>
+          )}
           <div>
             <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">Status</label>
-            <select name="status" defaultValue="DRAFT" className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand">
+            <select name="status" defaultValue={editing?.status ?? "DRAFT"} className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand">
               <option value="DRAFT">Draft</option>
               <option value="SCHEDULED">Scheduled</option>
               <option value="PUBLISHED">Publish Now</option>
@@ -224,7 +281,7 @@ export function NewsTable({
           </div>
           {error && <p className="text-sm text-brand">{error}</p>}
           <button type="submit" className="w-full rounded-sm bg-brand py-2.5 text-sm font-bold uppercase tracking-wide text-white transition hover:bg-brand-dark">
-            Save Article
+            {editing ? "Save Changes" : "Save Article"}
           </button>
         </form>
       </AdminModal>

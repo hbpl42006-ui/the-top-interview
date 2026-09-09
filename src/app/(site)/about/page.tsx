@@ -17,10 +17,10 @@ import {
   ArrowRight,
   Megaphone,
 } from "lucide-react";
-import { FaXTwitter, FaInstagram } from "react-icons/fa6";
+import { FaXTwitter, FaInstagram, FaFacebook, FaLinkedinIn } from "react-icons/fa6";
 import { Container } from "@/components/ui/container";
 import { SectionHeading } from "@/components/ui/section-heading";
-import { getAllReporters } from "@/lib/data/reporters";
+import { getActiveTeamMembers } from "@/lib/data/teamMembers";
 import { SITE } from "@/lib/constants";
 import { thumb } from "@/lib/images";
 
@@ -99,7 +99,7 @@ const EDITORIAL_VALUES = [
 ];
 
 export default async function AboutPage() {
-  const reporters = await getAllReporters();
+  const teamMembers = await getActiveTeamMembers();
 
   return (
     <div className="pb-14">
@@ -284,44 +284,49 @@ export default async function AboutPage() {
       </Container>
 
       {/* Team */}
-      <Container id="team" className="mt-14 scroll-mt-20">
-        <SectionHeading eyebrow="The People Behind The Stories" title="Meet Our Team" />
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {reporters.map((r) => (
-            <div key={r.slug} className="rounded-lg border border-border p-5">
-              <div className="flex items-start gap-4">
-                <Link href={`/reporter/${r.slug}`} className="relative h-16 w-16 shrink-0 overflow-hidden rounded-full">
-                  <Image src={r.photo} alt={r.name} fill className="object-cover" sizes="64px" />
-                </Link>
-                <div className="min-w-0">
-                  <Link href={`/reporter/${r.slug}`} className="font-serif text-base font-bold hover:text-brand">
-                    {r.name}
-                  </Link>
-                  <p className="text-xs font-bold uppercase tracking-wide text-brand">{r.designation}</p>
-                  {r.location && (
-                    <p className="mt-0.5 flex items-center gap-1 text-xs text-muted">
-                      <MapPin size={12} /> {r.location}
-                    </p>
+      {teamMembers.length > 0 && (
+        <Container id="team" className="mt-14 scroll-mt-20">
+          <SectionHeading eyebrow="The People Behind The Stories" title="Meet Our Team" />
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {teamMembers.map((m) => (
+              <div key={m.id} className="rounded-lg border border-border p-5">
+                <div className="flex items-start gap-4">
+                  <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-full">
+                    <Image src={m.photo} alt={m.name} fill className="object-cover" sizes="64px" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-serif text-base font-bold">{m.name}</p>
+                    <p className="text-xs font-bold uppercase tracking-wide text-brand">{m.designation}</p>
+                  </div>
+                </div>
+                <p className="mt-3 line-clamp-3 text-sm text-muted">{m.bio}</p>
+                <div className="mt-3 flex items-center gap-2">
+                  {m.twitter && (
+                    <a href={m.twitter} target="_blank" rel="noreferrer" aria-label={`${m.name} on X`} className="flex h-8 w-8 items-center justify-center rounded-full border border-border transition hover:border-brand hover:text-brand">
+                      <FaXTwitter size={13} />
+                    </a>
+                  )}
+                  {m.instagram && (
+                    <a href={m.instagram} target="_blank" rel="noreferrer" aria-label={`${m.name} on Instagram`} className="flex h-8 w-8 items-center justify-center rounded-full border border-border transition hover:border-brand hover:text-brand">
+                      <FaInstagram size={13} />
+                    </a>
+                  )}
+                  {m.facebook && (
+                    <a href={m.facebook} target="_blank" rel="noreferrer" aria-label={`${m.name} on Facebook`} className="flex h-8 w-8 items-center justify-center rounded-full border border-border transition hover:border-brand hover:text-brand">
+                      <FaFacebook size={13} />
+                    </a>
+                  )}
+                  {m.linkedin && (
+                    <a href={m.linkedin} target="_blank" rel="noreferrer" aria-label={`${m.name} on LinkedIn`} className="flex h-8 w-8 items-center justify-center rounded-full border border-border transition hover:border-brand hover:text-brand">
+                      <FaLinkedinIn size={13} />
+                    </a>
                   )}
                 </div>
               </div>
-              <p className="mt-3 line-clamp-3 text-sm text-muted">{r.bio}</p>
-              <div className="mt-3 flex items-center gap-2">
-                {r.twitter && (
-                  <a href={r.twitter} target="_blank" rel="noreferrer" className="flex h-8 w-8 items-center justify-center rounded-full border border-border transition hover:border-brand hover:text-brand">
-                    <FaXTwitter size={13} />
-                  </a>
-                )}
-                {r.instagram && (
-                  <a href={r.instagram} target="_blank" rel="noreferrer" className="flex h-8 w-8 items-center justify-center rounded-full border border-border transition hover:border-brand hover:text-brand">
-                    <FaInstagram size={13} />
-                  </a>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </Container>
+            ))}
+          </div>
+        </Container>
+      )}
 
       {/* CTA */}
       <section className="mt-16 bg-brand text-white">

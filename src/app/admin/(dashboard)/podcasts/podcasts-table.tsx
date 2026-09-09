@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Trash2 } from "lucide-react";
+import { Trash2, Pencil } from "lucide-react";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { AdminModal } from "@/components/admin/admin-modal";
 import { StatusPill } from "@/components/admin/status-pill";
@@ -14,6 +14,10 @@ interface Row {
   episodeNumber: number;
   title: string;
   guestName: string;
+  description: string;
+  cover: string;
+  audioUrl: string;
+  youtubeUrl: string | null;
   category: string;
   status: string;
   createdAt: string;
@@ -23,11 +27,24 @@ export function PodcastsTable({ episodes, categories }: { episodes: Row[]; categ
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
+  const [editing, setEditing] = useState<Row | null>(null);
   const [error, setError] = useState("");
   const filtered = episodes.filter((r) => r.title.toLowerCase().includes(search.toLowerCase()));
   const nextEpisodeNumber = (episodes[0]?.episodeNumber ?? 0) + 1;
 
-  async function handleCreate(formData: FormData) {
+  function openCreate() {
+    setEditing(null);
+    setError("");
+    setModalOpen(true);
+  }
+
+  function openEdit(episode: Row) {
+    setEditing(episode);
+    setError("");
+    setModalOpen(true);
+  }
+
+  async function handleSubmit(formData: FormData) {
     const title = String(formData.get("title") || "").trim();
     const guestName = String(formData.get("guestName") || "").trim();
     const category = String(formData.get("category") || "");
@@ -39,6 +56,25 @@ export function PodcastsTable({ episodes, categories }: { episodes: Row[]; categ
       return;
     }
     setError("");
+
+    if (editing) {
+      const cover = String(formData.get("cover") || "").trim() || editing.cover;
+      const res = await fetch(`/api/podcasts/${editing.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, guestName, category, description, audioUrl, cover, youtubeUrl: youtubeUrl || null }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        setError(json.error || "Failed to update episode.");
+        return;
+      }
+      setModalOpen(false);
+      setEditing(null);
+      router.refresh();
+      return;
+    }
+
     const res = await fetch("/api/podcasts", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -83,7 +119,7 @@ export function PodcastsTable({ episodes, categories }: { episodes: Row[]; categ
 
   return (
     <div>
-      <AdminPageHeader search={search} onSearchChange={setSearch} onAdd={() => setModalOpen(true)} addLabel="New Episode" />
+      <AdminPageHeader search={search} onSearchChange={setSearch} onAdd={openCreate} addLabel="New Episode" />
       <div className="overflow-x-auto rounded-lg border border-border">
         <table className="w-full min-w-190 text-sm">
           <thead className="bg-surface-muted text-left text-xs font-bold uppercase tracking-wide text-muted">
@@ -110,10 +146,19 @@ export function PodcastsTable({ episodes, categories }: { episodes: Row[]; categ
                   </button>
                 </td>
                 <td className="px-4 py-2.5 text-muted">{formatDate(r.createdAt)}</td>
-                <td className="px-4 py-2.5 text-right">
-                  <button onClick={() => remove(r.id)} className="ml-auto flex h-8 w-8 items-center justify-center rounded-md border border-border transition hover:border-brand hover:text-brand">
-                    <Trash2 size={14} />
-                  </button>
+                <td className="px-4 py-2.5">
+                  <div className="flex items-center justify-end gap-2">
+                    <button
+                      onClick={() => openEdit(r)}
+                      aria-label={`Edit ${r.title}`}
+                      className="flex h-8 w-8 items-center justify-center rounded-md border border-border transition hover:border-brand hover:text-brand"
+                    >
+                      <Pencil size={14} />
+                    </button>
+                    <button onClick={() => remove(r.id)} aria-label={`Delete ${r.title}`} className="flex h-8 w-8 items-center justify-center rounded-md border border-border transition hover:border-brand hover:text-brand">
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -121,23 +166,30 @@ export function PodcastsTable({ episodes, categories }: { episodes: Row[]; categ
         </table>
       </div>
 
-      <AdminModal open={modalOpen} onClose={() => setModalOpen(false)} title="New Episode">
-        <form action={handleCreate} className="space-y-4">
+      <AdminModal
+        open={modalOpen}
+        onClose={() => {
+          setModalOpen(false);
+          setEditing(null);
+        }}
+        title={editing ? "Edit Episode" : "New Episode"}
+      >
+        <form key={editing?.id ?? "new"} action={handleSubmit} className="space-y-4">
           <div>
             <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">Episode Title</label>
-            <input name="title" required className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
+            <input name="title" required defaultValue={editing?.title} className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
           </div>
           <div>
             <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">Guest</label>
-            <input name="guestName" required className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
+            <input name="guestName" required defaultValue={editing?.guestName} className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
           </div>
           <div>
             <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">Description</label>
-            <textarea name="description" required rows={3} className="w-full resize-none rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
+            <textarea name="description" required rows={3} defaultValue={editing?.description} className="w-full resize-none rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
           </div>
           <div>
             <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">Category</label>
-            <select name="category" defaultValue={categories[0]} className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand">
+            <select name="category" defaultValue={editing?.category ?? categories[0]} className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand">
               {categories.map((c) => (
                 <option key={c} value={c}>
                   {c}
@@ -147,19 +199,25 @@ export function PodcastsTable({ episodes, categories }: { episodes: Row[]; categ
           </div>
           <div>
             <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">Audio URL</label>
-            <input name="audioUrl" required placeholder="https://..." className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
+            <input name="audioUrl" required placeholder="https://..." defaultValue={editing?.audioUrl} className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
           </div>
           <div>
             <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">YouTube URL (optional)</label>
-            <input name="youtubeUrl" placeholder="https://youtube.com/..." className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
+            <input name="youtubeUrl" placeholder="https://youtube.com/..." defaultValue={editing?.youtubeUrl ?? ""} className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
           </div>
+          {editing && (
+            <div>
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">Cover Image URL</label>
+              <input name="cover" type="url" defaultValue={editing.cover} className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
+            </div>
+          )}
           <p className="text-xs text-muted">
             Uploading an audio file directly requires Cloudinary — set <code className="font-mono">CLOUDINARY_*</code> env vars, then use the upload
             button (coming from the same media pipeline as images) instead of pasting a URL.
           </p>
           {error && <p className="text-sm text-brand">{error}</p>}
           <button type="submit" className="w-full rounded-sm bg-brand py-2.5 text-sm font-bold uppercase tracking-wide text-white transition hover:bg-brand-dark">
-            Save Episode
+            {editing ? "Save Changes" : "Save Episode"}
           </button>
         </form>
       </AdminModal>

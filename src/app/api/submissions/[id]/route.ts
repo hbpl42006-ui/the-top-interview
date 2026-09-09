@@ -13,3 +13,12 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     return ok(submission);
   });
 }
+
+export async function DELETE(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  return handleRoute(async () => {
+    await requireRole(MODERATION_ROLES);
+    const { id } = await params;
+    await prisma.newsSubmission.delete({ where: { id } });
+    return ok({ id });
+  });
+}

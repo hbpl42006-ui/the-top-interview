@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Paperclip, MapPin } from "lucide-react";
+import { Paperclip, MapPin, Trash2 } from "lucide-react";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { StatusPill } from "@/components/admin/status-pill";
 import { timeAgo } from "@/lib/utils";
@@ -37,6 +37,11 @@ export function SubmissionsList({ submissions }: { submissions: SubmissionRow[] 
     router.refresh();
   }
 
+  async function remove(id: string) {
+    await fetch(`/api/submissions/${id}`, { method: "DELETE" });
+    router.refresh();
+  }
+
   return (
     <div>
       <AdminPageHeader search={search} onSearchChange={setSearch} />
@@ -63,17 +68,26 @@ export function SubmissionsList({ submissions }: { submissions: SubmissionRow[] 
                   )}
                 </p>
               </div>
-              <select
-                value={s.status}
-                onChange={(e) => updateStatus(s.id, e.target.value)}
-                className="rounded-sm border border-border bg-background px-2 py-1 text-xs outline-none focus:border-brand"
-              >
-                {STATUSES.map((st) => (
-                  <option key={st} value={st}>
-                    {st}
-                  </option>
-                ))}
-              </select>
+              <div className="flex items-center gap-2">
+                <select
+                  value={s.status}
+                  onChange={(e) => updateStatus(s.id, e.target.value)}
+                  className="rounded-sm border border-border bg-background px-2 py-1 text-xs outline-none focus:border-brand"
+                >
+                  {STATUSES.map((st) => (
+                    <option key={st} value={st}>
+                      {st}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  onClick={() => remove(s.id)}
+                  aria-label={`Delete submission from ${s.name}`}
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border transition hover:border-brand hover:text-brand"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
             </div>
             <p className="mt-2 text-sm text-foreground/90">{s.description}</p>
             <div className="mt-2">
