@@ -23,7 +23,7 @@ export function Header() {
           <Logo />
         </Link>
 
-        <nav className="hidden flex-1 items-center justify-center gap-6 lg:flex">
+        <nav className="hidden flex-1 items-center justify-center gap-2 lg:flex">
           {MAIN_NAV.map((item) => {
             const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
             return (

@@ -48,6 +48,8 @@ export const MAIN_NAV = [
   { label: "Interviews", href: "/interviews" },
   { label: "Podcasts", href: "/podcasts" },
   { label: "Videos", href: "/videos" },
+  { label: "About", href: "/about" },
+  { label: "Contact Us", href: "/contact" },
   { label: "Special Reports", href: "/special-reports" },
   { label: "Categories", href: "/category" },
 ];
