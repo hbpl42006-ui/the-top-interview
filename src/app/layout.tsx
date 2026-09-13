@@ -44,6 +44,12 @@ export const metadata: Metadata = {
     google: "SHl76yGiNCZRAwlZWlz8rAm6OjKPWKepwiS-R8aDBQE",
   },
 
+  icons: {
+  icon: "/favicon.png",
+  shortcut: "/favicon.png",
+  apple: "/favicon.png",
+},
+
   openGraph: {
     type: "website",
     siteName: SITE.name,
