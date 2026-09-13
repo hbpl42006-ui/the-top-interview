@@ -1,5 +1,6 @@
 import { v2 as cloudinary } from "cloudinary";
 import { RouteError } from "@/lib/api-response";
+import { IMAGE_TYPES, MAX_IMAGE_BYTES, validateImageFile } from "@/lib/image-upload";
 
 // Defends against a very common misconfiguration: pasting a value copied
 // from a local .env file (which may include surrounding quotes) or with
@@ -27,7 +28,7 @@ if (cloudinaryConfigured) {
 }
 
 const MAX_UPLOAD_BYTES = 15 * 1024 * 1024; // 15MB
-const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif", "video/mp4", "audio/mpeg"]);
+const ALLOWED_TYPES = new Set<string>([...IMAGE_TYPES, "video/mp4", "audio/mpeg"]);
 
 /**
  * Uploads a browser-submitted File (from FormData) to Cloudinary and returns
@@ -37,11 +38,7 @@ const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/g
  * The Cloudinary API secret never leaves the server — this only runs in
  * route handlers, never in a "use client" component.
  *
- * Throws RouteError (not a plain Error) for every failure mode, with the
- * real reason attached, so `handleRoute()` returns that reason to the caller
- * instead of a generic "Unable to process request." — a plain Error thrown
- * here used to fall through to the catch-all 500 branch and hide whatever
- * Cloudinary actually rejected (bad credentials, wrong cloud name, etc.).
+ * Provider details are logged server-side; callers receive safe messages.
  */
 export async function uploadToCloudinary(
   file: File,
@@ -49,15 +46,19 @@ export async function uploadToCloudinary(
 ): Promise<{ url: string; publicId: string }> {
   if (!cloudinaryConfigured) {
     throw new RouteError(
-      "Media uploads are not configured on this server. Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET.",
+      "Image uploads are temporarily unavailable. Please try again later.",
       503
     );
+  }
+  if (file.type.startsWith("image/")) {
+    const error = validateImageFile(file);
+    if (error) throw new RouteError(error, file.size >= MAX_IMAGE_BYTES ? 413 : 415);
   }
   if (file.size > MAX_UPLOAD_BYTES) {
     throw new RouteError("File is too large (max 15MB).", 413);
   }
   if (!ALLOWED_TYPES.has(file.type)) {
-    throw new RouteError(`Unsupported file type: ${file.type}`, 415);
+    throw new RouteError("Unsupported file type.", 415);
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
@@ -79,7 +80,7 @@ export async function uploadToCloudinary(
           });
           reject(
             new RouteError(
-              error?.message ? `Cloudinary rejected the upload: ${error.message}` : "Cloudinary rejected the upload.",
+              "Failed to upload image. Please try again.",
               502
             )
           );

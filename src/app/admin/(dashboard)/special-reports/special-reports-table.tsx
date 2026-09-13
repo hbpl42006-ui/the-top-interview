@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Trash2, Pencil } from "lucide-react";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { AdminModal } from "@/components/admin/admin-modal";
+import { ImageUploadField } from "@/components/admin/image-upload-field";
 import { StatusPill } from "@/components/admin/status-pill";
 import { formatDate, slugify } from "@/lib/utils";
 
@@ -25,15 +26,21 @@ export function SpecialReportsTable({ reports }: { reports: Row[] }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Row | null>(null);
   const [error, setError] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+  const [uploading, setUploading] = useState(false);
   const filtered = reports.filter((r) => r.title.toLowerCase().includes(search.toLowerCase()));
 
   function openCreate() {
+    setImageUrl("");
+    setUploading(false);
     setEditing(null);
     setError("");
     setModalOpen(true);
   }
 
   function openEdit(report: Row) {
+    setImageUrl(report.image);
+    setUploading(false);
     setEditing(report);
     setError("");
     setModalOpen(true);
@@ -81,7 +88,7 @@ export function SpecialReportsTable({ reports }: { reports: Row[] }) {
         slug: `${slugify(title)}-${Date.now()}`,
         title,
         dek,
-        image: "https://picsum.photos/seed/new-special-report/1600/900",
+        image: String(formData.get("image") || "").trim() || "https://picsum.photos/seed/new-special-report/1600/900",
         location,
         chapters: [{ title: chapterTitle, body: chapterBody }],
         timeline: [],
@@ -166,7 +173,7 @@ export function SpecialReportsTable({ reports }: { reports: Row[] }) {
         }}
         title={editing ? "Edit Special Report" : "New Special Report"}
       >
-        <form key={editing?.id ?? "new"} action={handleSubmit} className="space-y-4">
+        <form key={editing?.id ?? "new"} action={handleSubmit} onSubmit={(event) => { if (uploading) event.preventDefault(); }} className="space-y-4">
           <div>
             <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">Title</label>
             <input name="title" required defaultValue={editing?.title} className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
@@ -179,12 +186,16 @@ export function SpecialReportsTable({ reports }: { reports: Row[] }) {
             <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">Location</label>
             <input name="location" required defaultValue={editing?.location} className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
           </div>
+          <ImageUploadField
+            name="image"
+            label="Cover Image"
+            folder="special-reports"
+            value={imageUrl}
+            onChange={setImageUrl}
+            onUploadingChange={setUploading}
+          />
           {editing ? (
             <>
-              <div>
-                <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">Cover Image URL</label>
-                <input name="image" type="url" defaultValue={editing.image} className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
-              </div>
               <p className="text-xs text-muted">Chapters and timeline entries aren&apos;t editable here yet — only the title, dek, location and cover image.</p>
             </>
           ) : (
@@ -201,7 +212,7 @@ export function SpecialReportsTable({ reports }: { reports: Row[] }) {
             </>
           )}
           {error && <p className="text-sm text-brand">{error}</p>}
-          <button type="submit" className="w-full rounded-sm bg-brand py-2.5 text-sm font-bold uppercase tracking-wide text-white transition hover:bg-brand-dark">
+          <button type="submit" disabled={uploading} className="w-full rounded-sm bg-brand py-2.5 text-sm font-bold uppercase tracking-wide text-white transition hover:bg-brand-dark disabled:opacity-60">
             {editing ? "Save Changes" : "Save Special Report"}
           </button>
         </form>

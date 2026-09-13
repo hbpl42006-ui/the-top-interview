@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Eye, Trash2, Star, Radio, Pencil } from "lucide-react";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { AdminModal } from "@/components/admin/admin-modal";
+import { ImageUploadField } from "@/components/admin/image-upload-field";
 import { StatusPill } from "@/components/admin/status-pill";
 import { formatDate, slugify } from "@/lib/utils";
 
@@ -39,15 +40,21 @@ export function NewsTable({
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Row | null>(null);
   const [error, setError] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+  const [uploading, setUploading] = useState(false);
   const filtered = articles.filter((a) => a.headline.toLowerCase().includes(search.toLowerCase()));
 
   function openCreate() {
+    setImageUrl("");
+    setUploading(false);
     setEditing(null);
     setError("");
     setModalOpen(true);
   }
 
   function openEdit(article: Row) {
+    setImageUrl(article.image);
+    setUploading(false);
     setEditing(article);
     setError("");
     setModalOpen(true);
@@ -92,7 +99,7 @@ export function NewsTable({
         headline,
         excerpt,
         body,
-        image: "https://picsum.photos/seed/new-story/900/600",
+        image: String(formData.get("image") || "").trim() || "https://picsum.photos/seed/new-story/900/600",
         categoryId,
         reporterId,
         status,
@@ -224,7 +231,7 @@ export function NewsTable({
         }}
         title={editing ? "Edit Article" : "New Article"}
       >
-        <form key={editing?.id ?? "new"} action={handleSubmit} className="space-y-4">
+        <form key={editing?.id ?? "new"} action={handleSubmit} onSubmit={(event) => { if (uploading) event.preventDefault(); }} className="space-y-4">
           <div>
             <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">Headline</label>
             <input name="headline" required defaultValue={editing?.headline} className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
@@ -265,12 +272,14 @@ export function NewsTable({
             <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">Body</label>
             <textarea name="body" required rows={6} defaultValue={editing?.body} className="w-full resize-none rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
           </div>
-          {editing && (
-            <div>
-              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">Image URL</label>
-              <input name="image" type="url" defaultValue={editing.image} className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
-            </div>
-          )}
+          <ImageUploadField
+            name="image"
+            label="Featured Image"
+            folder="news"
+            value={imageUrl}
+            onChange={setImageUrl}
+            onUploadingChange={setUploading}
+          />
           <div>
             <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">Status</label>
             <select name="status" defaultValue={editing?.status ?? "DRAFT"} className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand">
@@ -280,7 +289,7 @@ export function NewsTable({
             </select>
           </div>
           {error && <p className="text-sm text-brand">{error}</p>}
-          <button type="submit" className="w-full rounded-sm bg-brand py-2.5 text-sm font-bold uppercase tracking-wide text-white transition hover:bg-brand-dark">
+          <button type="submit" disabled={uploading} className="w-full rounded-sm bg-brand py-2.5 text-sm font-bold uppercase tracking-wide text-white transition hover:bg-brand-dark disabled:opacity-60">
             {editing ? "Save Changes" : "Save Article"}
           </button>
         </form>

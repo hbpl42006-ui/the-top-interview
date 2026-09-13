@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Trash2, Pencil } from "lucide-react";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { AdminModal } from "@/components/admin/admin-modal";
+import { ImageUploadField } from "@/components/admin/image-upload-field";
 import { StatusPill } from "@/components/admin/status-pill";
 import { formatDate, slugify } from "@/lib/utils";
 
@@ -29,16 +30,22 @@ export function PodcastsTable({ episodes, categories }: { episodes: Row[]; categ
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Row | null>(null);
   const [error, setError] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+  const [uploading, setUploading] = useState(false);
   const filtered = episodes.filter((r) => r.title.toLowerCase().includes(search.toLowerCase()));
   const nextEpisodeNumber = (episodes[0]?.episodeNumber ?? 0) + 1;
 
   function openCreate() {
+    setImageUrl("");
+    setUploading(false);
     setEditing(null);
     setError("");
     setModalOpen(true);
   }
 
   function openEdit(episode: Row) {
+    setImageUrl(episode.cover);
+    setUploading(false);
     setEditing(episode);
     setError("");
     setModalOpen(true);
@@ -84,7 +91,7 @@ export function PodcastsTable({ episodes, categories }: { episodes: Row[]; categ
         title,
         guestName,
         description,
-        cover: "https://picsum.photos/seed/new-podcast/800/800",
+        cover: String(formData.get("cover") || "").trim() || "https://picsum.photos/seed/new-podcast/800/800",
         audioUrl,
         duration: "0:00",
         category,
@@ -174,7 +181,7 @@ export function PodcastsTable({ episodes, categories }: { episodes: Row[]; categ
         }}
         title={editing ? "Edit Episode" : "New Episode"}
       >
-        <form key={editing?.id ?? "new"} action={handleSubmit} className="space-y-4">
+        <form key={editing?.id ?? "new"} action={handleSubmit} onSubmit={(event) => { if (uploading) event.preventDefault(); }} className="space-y-4">
           <div>
             <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">Episode Title</label>
             <input name="title" required defaultValue={editing?.title} className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
@@ -205,18 +212,20 @@ export function PodcastsTable({ episodes, categories }: { episodes: Row[]; categ
             <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">YouTube URL (optional)</label>
             <input name="youtubeUrl" placeholder="https://youtube.com/..." defaultValue={editing?.youtubeUrl ?? ""} className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
           </div>
-          {editing && (
-            <div>
-              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">Cover Image URL</label>
-              <input name="cover" type="url" defaultValue={editing.cover} className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
-            </div>
-          )}
+          <ImageUploadField
+            name="cover"
+            label="Cover Image"
+            folder="podcasts"
+            value={imageUrl}
+            onChange={setImageUrl}
+            onUploadingChange={setUploading}
+          />
           <p className="text-xs text-muted">
             Uploading an audio file directly requires Cloudinary — set <code className="font-mono">CLOUDINARY_*</code> env vars, then use the upload
             button (coming from the same media pipeline as images) instead of pasting a URL.
           </p>
           {error && <p className="text-sm text-brand">{error}</p>}
-          <button type="submit" className="w-full rounded-sm bg-brand py-2.5 text-sm font-bold uppercase tracking-wide text-white transition hover:bg-brand-dark">
+          <button type="submit" disabled={uploading} className="w-full rounded-sm bg-brand py-2.5 text-sm font-bold uppercase tracking-wide text-white transition hover:bg-brand-dark disabled:opacity-60">
             {editing ? "Save Changes" : "Save Episode"}
           </button>
         </form>

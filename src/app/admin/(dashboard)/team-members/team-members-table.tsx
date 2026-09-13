@@ -31,18 +31,23 @@ export function TeamMembersTable({ members }: { members: TeamMemberRow[] }) {
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [imageUrl, setImageUrl] = useState("");
 
   const filtered = members.filter(
     (m) => m.name.toLowerCase().includes(search.toLowerCase()) || m.designation.toLowerCase().includes(search.toLowerCase())
   );
 
   function openCreate() {
+    setImageUrl("");
+    setUploading(false);
     setEditing(null);
     setError("");
     setModalOpen(true);
   }
 
   function openEdit(member: TeamMemberRow) {
+    setImageUrl(member.photo);
+    setUploading(false);
     setEditing(member);
     setError("");
     setModalOpen(true);
@@ -64,7 +69,7 @@ export function TeamMembersTable({ members }: { members: TeamMemberRow[] }) {
       return;
     }
     if (!photo) {
-      setError("Please upload a profile image.");
+      setError("Please upload a profile image or enter its URL.");
       return;
     }
 
@@ -185,12 +190,14 @@ export function TeamMembersTable({ members }: { members: TeamMemberRow[] }) {
         }}
         title={editing ? "Edit Team Member" : "New Team Member"}
       >
-        <form key={editing?.id ?? "new"} action={handleSubmit} className="space-y-4">
+        <form key={editing?.id ?? "new"} action={handleSubmit} onSubmit={(event) => { if (uploading) event.preventDefault(); }} className="space-y-4">
           <ImageUploadField
             name="photo"
             label="Profile Image"
             folder="team"
-            defaultValue={editing?.photo}
+            value={imageUrl}
+            onChange={setImageUrl}
+            disabled={saving}
             required
             onUploadingChange={setUploading}
           />

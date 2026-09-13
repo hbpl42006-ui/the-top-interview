@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Trash2, MapPin, Pencil } from "lucide-react";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { AdminModal } from "@/components/admin/admin-modal";
+import { ImageUploadField } from "@/components/admin/image-upload-field";
 import { StatusPill } from "@/components/admin/status-pill";
 import { formatDate, slugify } from "@/lib/utils";
 
@@ -36,15 +37,21 @@ export function GroundReportsTable({
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Row | null>(null);
   const [error, setError] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+  const [uploading, setUploading] = useState(false);
   const filtered = reports.filter((r) => r.headline.toLowerCase().includes(search.toLowerCase()));
 
   function openCreate() {
+    setImageUrl("");
+    setUploading(false);
     setEditing(null);
     setError("");
     setModalOpen(true);
   }
 
   function openEdit(report: Row) {
+    setImageUrl(report.image);
+    setUploading(false);
     setEditing(report);
     setError("");
     setModalOpen(true);
@@ -88,7 +95,7 @@ export function GroundReportsTable({
         headline,
         excerpt,
         body,
-        image: "https://picsum.photos/seed/new-ground-report/900/600",
+        image: String(formData.get("image") || "").trim() || "https://picsum.photos/seed/new-ground-report/900/600",
         mapQuery: location || headline,
         reporterId,
         status: "DRAFT",
@@ -182,7 +189,7 @@ export function GroundReportsTable({
         }}
         title={editing ? "Edit Ground Report" : "New Ground Report"}
       >
-        <form key={editing?.id ?? "new"} action={handleSubmit} className="space-y-4">
+        <form key={editing?.id ?? "new"} action={handleSubmit} onSubmit={(event) => { if (uploading) event.preventDefault(); }} className="space-y-4">
           <div>
             <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">Headline</label>
             <input name="headline" required defaultValue={editing?.headline} className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
@@ -212,14 +219,16 @@ export function GroundReportsTable({
             <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">Body</label>
             <textarea name="body" required rows={5} defaultValue={editing?.body} className="w-full resize-none rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
           </div>
-          {editing && (
-            <div>
-              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">Image URL</label>
-              <input name="image" type="url" defaultValue={editing.image} className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
-            </div>
-          )}
+          <ImageUploadField
+            name="image"
+            label="Image"
+            folder="ground-reports"
+            value={imageUrl}
+            onChange={setImageUrl}
+            onUploadingChange={setUploading}
+          />
           {error && <p className="text-sm text-brand">{error}</p>}
-          <button type="submit" className="w-full rounded-sm bg-brand py-2.5 text-sm font-bold uppercase tracking-wide text-white transition hover:bg-brand-dark">
+          <button type="submit" disabled={uploading} className="w-full rounded-sm bg-brand py-2.5 text-sm font-bold uppercase tracking-wide text-white transition hover:bg-brand-dark disabled:opacity-60">
             {editing ? "Save Changes" : "Save Ground Report"}
           </button>
         </form>

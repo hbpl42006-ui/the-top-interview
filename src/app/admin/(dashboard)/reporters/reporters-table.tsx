@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Trash2, Pencil } from "lucide-react";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { AdminModal } from "@/components/admin/admin-modal";
+import { ImageUploadField } from "@/components/admin/image-upload-field";
 import { portrait } from "@/lib/images";
 import { slugify } from "@/lib/utils";
 import type { Reporter } from "@/lib/types";
@@ -16,15 +17,21 @@ export function ReportersTable({ reporters }: { reporters: Reporter[] }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Reporter | null>(null);
   const [error, setError] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+  const [uploading, setUploading] = useState(false);
   const filtered = reporters.filter((r) => r.name.toLowerCase().includes(search.toLowerCase()));
 
   function openCreate() {
+    setImageUrl("");
+    setUploading(false);
     setEditing(null);
     setError("");
     setModalOpen(true);
   }
 
   function openEdit(reporter: Reporter) {
+    setImageUrl(reporter.photo);
+    setUploading(false);
     setEditing(reporter);
     setError("");
     setModalOpen(true);
@@ -75,7 +82,7 @@ export function ReportersTable({ reporters }: { reporters: Reporter[] }) {
     const res = await fetch("/api/reporters", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, slug, designation, bio, photo: portrait(slug) }),
+      body: JSON.stringify({ name, slug, designation, bio, photo: String(formData.get("photo") || "").trim() || portrait(slug) }),
     });
     const json = await res.json();
     if (!res.ok || !json.success) {
@@ -145,7 +152,7 @@ export function ReportersTable({ reporters }: { reporters: Reporter[] }) {
         }}
         title={editing ? "Edit Reporter" : "New Reporter"}
       >
-        <form key={editing?.id ?? "new"} action={handleSubmit} className="space-y-4">
+        <form key={editing?.id ?? "new"} action={handleSubmit} onSubmit={(event) => { if (uploading) event.preventDefault(); }} className="space-y-4">
           <div>
             <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">Full Name</label>
             <input name="name" required defaultValue={editing?.name} className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
@@ -158,12 +165,16 @@ export function ReportersTable({ reporters }: { reporters: Reporter[] }) {
             <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">Short Bio</label>
             <textarea name="bio" required rows={3} defaultValue={editing?.bio} className="w-full resize-none rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
           </div>
+          <ImageUploadField
+            name="photo"
+            label="Profile Image"
+            folder="reporters"
+            value={imageUrl}
+            onChange={setImageUrl}
+            onUploadingChange={setUploading}
+          />
           {editing && (
             <>
-              <div>
-                <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">Photo URL</label>
-                <input name="photo" type="url" defaultValue={editing.photo} className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
-              </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">Twitter / X URL</label>
@@ -181,7 +192,7 @@ export function ReportersTable({ reporters }: { reporters: Reporter[] }) {
             </>
           )}
           {error && <p className="text-sm text-brand">{error}</p>}
-          <button type="submit" className="w-full rounded-sm bg-brand py-2.5 text-sm font-bold uppercase tracking-wide text-white transition hover:bg-brand-dark">
+          <button type="submit" disabled={uploading} className="w-full rounded-sm bg-brand py-2.5 text-sm font-bold uppercase tracking-wide text-white transition hover:bg-brand-dark disabled:opacity-60">
             {editing ? "Save Changes" : "Save Reporter"}
           </button>
         </form>

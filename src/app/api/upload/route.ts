@@ -16,7 +16,7 @@ export async function POST(request: Request) {
 
     if (!cloudinaryConfigured) {
       throw new RouteError(
-        "Media uploads are not configured on this server. Set CLOUDINARY_CLOUD_NAME/API_KEY/API_SECRET.",
+        "Image uploads are temporarily unavailable. Please try again later.",
         503
       );
     }
