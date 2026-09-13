@@ -1,13 +1,40 @@
 import type { NextConfig } from "next";
 
+const proxiedApiRoutes = [
+  "ads",
+  "categories",
+  "comments",
+  "contact",
+  "ground-reports",
+  "interviews",
+  "locations",
+  "news",
+  "newsletter",
+  "podcasts",
+  "public-voice",
+  "reporters",
+  "search",
+  "special-reports",
+  "submissions",
+  "team-members",
+  "tips",
+  "upload",
+  "users",
+  "videos",
+];
+
 const nextConfig: NextConfig = {
   async rewrites() {
-    return [
+    return proxiedApiRoutes.flatMap((route) => [
       {
-        source: "/api/:path*",
-        destination: "https://api.thetopinterview.com/api/:path*",
+        source: `/api/${route}`,
+        destination: `https://api.thetopinterview.com/api/${route}`,
       },
-    ];
+      {
+        source: `/api/${route}/:path*`,
+        destination: `https://api.thetopinterview.com/api/${route}/:path*`,
+      },
+    ]);
   },
 
   images: {
