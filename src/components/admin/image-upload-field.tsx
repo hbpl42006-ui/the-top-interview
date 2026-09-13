@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { ImagePlus, Loader2 } from "lucide-react";
 import { isImageUrl, validateImageFile } from "@/lib/image-upload";
+import { uploadMedia } from "@/lib/client/media-upload";
 
 interface ImageUploadFieldProps {
   name: string;
@@ -10,6 +11,7 @@ interface ImageUploadFieldProps {
   onChange: (url: string) => void;
   label?: string;
   folder?: string;
+  context?: import("@/lib/image-upload").ImageUploadContext;
   required?: boolean;
   disabled?: boolean;
   onUploadingChange?: (uploading: boolean) => void;
@@ -21,6 +23,7 @@ export function ImageUploadField({
   onChange,
   label = "Image",
   folder = "misc",
+  context,
   required = false,
   disabled = false,
   onUploadingChange,
@@ -62,33 +65,9 @@ export function ImageUploadField({
     const timeout = setTimeout(() => controller.abort(), 60000);
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("folder", folder);
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-        credentials: "same-origin",
-        signal: controller.signal,
-      });
-      if (!response.ok) {
-        const message = response.status === 401
-          ? "Your session has expired. Sign in again to upload an image."
-          : response.status === 403
-            ? "You do not have permission to upload images."
-            : response.status === 413
-              ? "Image must be smaller than 5 MB."
-              : response.status === 415
-                ? "Choose a JPEG, PNG, WebP or AVIF image."
-                : "Failed to upload image. Please try again.";
-        throw new Error(message);
-      }
-      const json = await response.json();
-      const url = json?.data?.url;
-      if (!json?.success || typeof url !== "string" || !isImageUrl(url) || !url.startsWith("https://")) {
-        throw new Error("Failed to upload image. Please try again.");
-      }
-      if (!controller.signal.aborted) onChange(url);
+      const uploadContext = context ?? (folder === "team" ? "team-members" : folder) as import("@/lib/image-upload").ImageUploadContext;
+      const result = await uploadMedia(file, uploadContext, controller.signal);
+      if (!controller.signal.aborted) onChange(result.secureUrl);
     } catch (err) {
       // Only display our own messages, never the API's raw error payload.
       const safeMessages = [

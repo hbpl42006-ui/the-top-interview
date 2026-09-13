@@ -9,6 +9,19 @@ import { ImageUploadField } from "@/components/admin/image-upload-field";
 import { StatusPill } from "@/components/admin/status-pill";
 import { formatDate, slugify } from "@/lib/utils";
 
+async function readApiResponse(response: Response): Promise<{ success?: boolean; error?: string; data?: unknown }> {
+  const contentType = response.headers.get("content-type") ?? "";
+  if (!contentType.includes("application/json")) {
+    await response.text();
+    return { success: false, error: "Failed to save article. Please try again." };
+  }
+  try {
+    return await response.json();
+  } catch {
+    return { success: false, error: "Failed to save article. Please try again." };
+  }
+}
+
 interface Row {
   id: string;
   slug: string;
@@ -80,7 +93,7 @@ export function NewsTable({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ headline, excerpt, body, image, categoryId, reporterId, status }),
       });
-      const json = await res.json();
+      const json = await readApiResponse(res);
       if (!res.ok || !json.success) {
         setError(json.error || "Failed to update article.");
         return;
@@ -106,7 +119,7 @@ export function NewsTable({
         tagNames: [],
       }),
     });
-    const json = await res.json();
+    const json = await readApiResponse(res);
     if (!res.ok || !json.success) {
       setError(json.error || "Failed to create article.");
       return;

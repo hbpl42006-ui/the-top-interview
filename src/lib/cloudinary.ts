@@ -1,6 +1,6 @@
 import { v2 as cloudinary } from "cloudinary";
 import { RouteError } from "@/lib/api-response";
-import { IMAGE_TYPES, MAX_IMAGE_BYTES, validateImageFile } from "@/lib/image-upload";
+import { IMAGE_TYPES, MAX_IMAGE_BYTES, validateImageFile, hasImageSignature } from "@/lib/image-upload";
 
 // Defends against a very common misconfiguration: pasting a value copied
 // from a local .env file (which may include surrounding quotes) or with
@@ -43,7 +43,7 @@ const ALLOWED_TYPES = new Set<string>([...IMAGE_TYPES, "video/mp4", "audio/mpeg"
 export async function uploadToCloudinary(
   file: File,
   folder: string
-): Promise<{ url: string; publicId: string }> {
+): Promise<{ url: string; secureUrl: string; publicId: string; resourceType: string; format?: string; width?: number; height?: number; bytes?: number }> {
   if (!cloudinaryConfigured) {
     throw new RouteError(
       "Image uploads are temporarily unavailable. Please try again later.",
@@ -53,6 +53,8 @@ export async function uploadToCloudinary(
   if (file.type.startsWith("image/")) {
     const error = validateImageFile(file);
     if (error) throw new RouteError(error, file.size >= MAX_IMAGE_BYTES ? 413 : 415);
+    const header = new Uint8Array(await file.slice(0, 16).arrayBuffer());
+    if (!hasImageSignature(header, file.type)) throw new RouteError("The file contents do not match its image type.", 415);
   }
   if (file.size > MAX_UPLOAD_BYTES) {
     throw new RouteError("File is too large (max 15MB).", 413);
@@ -86,7 +88,7 @@ export async function uploadToCloudinary(
           );
           return;
         }
-        resolve({ url: result.secure_url, publicId: result.public_id });
+        resolve({ url: result.secure_url, secureUrl: result.secure_url, publicId: result.public_id, resourceType: result.resource_type, format: result.format, width: result.width, height: result.height, bytes: result.bytes });
       }
     );
     stream.end(buffer);

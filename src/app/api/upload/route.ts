@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { uploadToCloudinary, cloudinaryConfigured } from "@/lib/cloudinary";
 import { handleRoute, ok, unauthorized, RouteError } from "@/lib/api-response";
+import { IMAGE_UPLOAD_FOLDERS, type ImageUploadContext } from "@/lib/image-upload";
 
 const ADMIN_ROLES = new Set(["SUPER_ADMIN", "ADMIN", "EDITOR", "REPORTER", "VIDEO_EDITOR", "PODCAST_MANAGER"]);
 
@@ -23,13 +24,15 @@ export async function POST(request: Request) {
 
     const formData = await request.formData();
     const file = formData.get("file");
-    const folder = String(formData.get("folder") || "misc").replace(/[^a-z0-9-]/gi, "");
+    const context = String(formData.get("context") || "") as ImageUploadContext;
+    const folder = IMAGE_UPLOAD_FOLDERS[context];
+    if (!folder) throw new RouteError("Invalid upload context.", 400);
 
     if (!(file instanceof File)) {
       throw new RouteError("No file provided.", 400);
     }
 
-    const result = await uploadToCloudinary(file, folder || "misc");
+    const result = await uploadToCloudinary(file, folder);
     return ok(result, 201);
   });
 }
