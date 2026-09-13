@@ -2,9 +2,12 @@
 
 import { useState, type FormEvent } from "react";
 import { CheckCircle2 } from "lucide-react";
+import { useLanguage } from "@/components/providers/language-provider";
 
 export function CorrectionForm() {
   const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
+  const { dict } = useLanguage();
+  const d = dict.correctionForm;
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -40,7 +43,7 @@ export function CorrectionForm() {
     return (
       <div className="flex flex-col items-center gap-2 rounded-lg border border-border bg-surface-muted p-6 text-center">
         <CheckCircle2 size={28} className="text-brand" />
-        <p className="text-sm font-semibold">Thank you. Our editorial team will review this shortly.</p>
+        <p className="text-sm font-semibold">{d.thankYou}</p>
       </div>
     );
   }
@@ -48,33 +51,33 @@ export function CorrectionForm() {
   return (
     <form onSubmit={handleSubmit} className="grid gap-4 sm:grid-cols-2">
       <div className="sm:col-span-2">
-        <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">Article URL</label>
+        <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">{d.articleUrl}</label>
         <input name="url" type="url" required placeholder="https://thetopinterview.in/news/..." className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
       </div>
       <div className="sm:col-span-2">
-        <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">Issue</label>
-        <input name="issue" required placeholder="What is inaccurate?" className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
+        <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">{d.issue}</label>
+        <input name="issue" required placeholder={d.issuePlaceholder} className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
       </div>
       <div className="sm:col-span-2">
-        <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">Correct Information</label>
+        <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">{d.correctInfo}</label>
         <textarea name="correction" required rows={3} className="w-full resize-none rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
       </div>
       <div className="sm:col-span-2">
-        <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">Supporting Information (optional)</label>
+        <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">{d.supportingInfo}</label>
         <textarea name="supporting" rows={2} className="w-full resize-none rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
       </div>
       <div>
-        <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">Your Email</label>
+        <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">{d.yourEmail}</label>
         <input name="email" type="email" required className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
       </div>
-      {status === "error" && <p className="text-sm text-brand sm:col-span-2">Something went wrong. Please try again.</p>}
+      {status === "error" && <p className="text-sm text-brand sm:col-span-2">{d.genericError}</p>}
       <div className="sm:col-span-2">
         <button
           type="submit"
           disabled={status === "loading"}
           className="rounded-sm bg-charcoal px-6 py-3 text-sm font-bold uppercase tracking-wide text-white transition hover:bg-black disabled:opacity-60"
         >
-          {status === "loading" ? "Submitting..." : "Submit Correction"}
+          {status === "loading" ? d.submitting : d.submit}
         </button>
       </div>
     </form>

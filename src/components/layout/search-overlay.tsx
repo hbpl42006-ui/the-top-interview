@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Search, X, Clock, TrendingUp } from "lucide-react";
 import { POPULAR_SEARCHES } from "@/lib/constants";
 import { useSearchResults } from "@/components/search/use-search-results";
+import { useLanguage } from "@/components/providers/language-provider";
 import { cn } from "@/lib/utils";
 
 const RECENT_KEY = "tti-recent-searches";
@@ -14,6 +15,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
   const [recent, setRecent] = useState<string[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const { results } = useSearchResults(query);
+  const { dict } = useLanguage();
 
   useEffect(() => {
     if (open) {
@@ -53,12 +55,12 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && commitSearch(query)}
-            placeholder="Search news, reporters, locations, interviews, podcasts..."
+            placeholder={dict.searchOverlay.placeholder}
             className="w-full bg-transparent text-lg font-medium text-foreground outline-none placeholder:text-muted sm:text-xl"
           />
           <button
             onClick={onClose}
-            aria-label="Close search"
+            aria-label={dict.searchOverlay.closeSearch}
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition hover:bg-surface-muted"
           >
             <X size={20} />
@@ -72,7 +74,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
             {recent.length > 0 && (
               <div>
                 <h3 className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-muted">
-                  <Clock size={14} /> Recent Searches
+                  <Clock size={14} /> {dict.searchOverlay.recentSearches}
                 </h3>
                 <div className="flex flex-wrap gap-2">
                   {recent.map((r) => (
@@ -89,7 +91,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
             )}
             <div>
               <h3 className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-muted">
-                <TrendingUp size={14} /> Popular Searches
+                <TrendingUp size={14} /> {dict.searchOverlay.popularSearches}
               </h3>
               <div className="flex flex-wrap gap-2">
                 {POPULAR_SEARCHES.map((r) => (
@@ -105,7 +107,9 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
             </div>
           </div>
         ) : results.length === 0 ? (
-          <p className="py-12 text-center text-muted">No results for &ldquo;{query}&rdquo;. Try a different keyword.</p>
+          <p className="py-12 text-center text-muted">
+            {dict.searchOverlay.noResultsPrefix} &ldquo;{query}&rdquo;. {dict.searchOverlay.noResultsSuffix}
+          </p>
         ) : (
           <ul className="divide-y divide-border">
             {results.map((r) => (

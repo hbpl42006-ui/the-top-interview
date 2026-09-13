@@ -3,8 +3,10 @@ import Link from "next/link";
 import { Container } from "@/components/ui/container";
 import { formatDate } from "@/lib/utils";
 import { getAllSpecialReports } from "@/lib/data/specialReports";
+import { getLocale, getDictionary } from "@/lib/i18n";
 
 export async function SpecialReportsSection() {
+  const dict = getDictionary(await getLocale());
   const specialReports = await getAllSpecialReports();
   const [main, ...rest] = specialReports;
   if (!main) return null;
@@ -15,12 +17,12 @@ export async function SpecialReportsSection() {
         <div className="mb-8 flex items-end justify-between border-b-2 border-brand pb-4">
           <div>
             <span className="mb-1 block text-xs font-bold uppercase tracking-[0.2em] text-brand-light">
-              Investigative &middot; Long-Form
+              {dict.home.specialReportSection.eyebrow}
             </span>
-            <h2 className="font-serif text-2xl font-extrabold sm:text-3xl">Special Report</h2>
+            <h2 className="font-serif text-2xl font-extrabold sm:text-3xl">{dict.home.specialReportSection.title}</h2>
           </div>
           <Link href="/special-reports" className="text-sm font-semibold text-brand-light hover:underline">
-            All Reports
+            {dict.common.allReports}
           </Link>
         </div>
 

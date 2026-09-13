@@ -3,8 +3,10 @@ import Link from "next/link";
 import { MapPin, Mic2, Video, PlayCircle } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { getLatestGroundReports } from "@/lib/data/groundReports";
+import { getLocale, getDictionary } from "@/lib/i18n";
 
 export async function FromTheGroundSection() {
+  const dict = getDictionary(await getLocale());
   const [report] = await getLatestGroundReports(1);
   if (!report) return null;
 
@@ -17,10 +19,10 @@ export async function FromTheGroundSection() {
       <Container className="relative py-14 sm:py-20">
         <div className="max-w-2xl">
           <span className="mb-4 inline-block text-xs font-bold uppercase tracking-[0.25em] text-brand-light">
-            From The Ground
+            {dict.home.fromTheGround.eyebrow}
           </span>
           <h2 className="font-serif text-3xl font-extrabold leading-tight sm:text-4xl lg:text-5xl">
-            &ldquo;We visited the location to understand what is really happening.&rdquo;
+            {dict.home.fromTheGround.quote}
           </h2>
           <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm font-semibold">
             <span className="flex items-center gap-2">
@@ -30,14 +32,14 @@ export async function FromTheGroundSection() {
               <Mic2 size={16} className="text-brand-light" /> {report.reporterName}
             </span>
             <span className="flex items-center gap-2">
-              <Video size={16} className="text-brand-light" /> Ground Report Video
+              <Video size={16} className="text-brand-light" /> {dict.home.fromTheGround.groundReportVideo}
             </span>
           </div>
           <Link
             href={`/ground-report/${report.slug}`}
             className="mt-8 inline-flex items-center gap-2 rounded-sm bg-brand px-6 py-3.5 text-sm font-extrabold uppercase tracking-wide text-white transition hover:bg-brand-dark"
           >
-            <PlayCircle size={18} /> Watch The Ground Report
+            <PlayCircle size={18} /> {dict.home.fromTheGround.watchButton}
           </Link>
         </div>
       </Container>

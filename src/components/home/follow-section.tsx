@@ -2,6 +2,7 @@ import { MessageCircle, Send } from "lucide-react";
 import { FaYoutube, FaInstagram, FaFacebook, FaXTwitter } from "react-icons/fa6";
 import { Container } from "@/components/ui/container";
 import { SITE, SOCIAL_LINKS } from "@/lib/constants";
+import { getLocale, getDictionary } from "@/lib/i18n";
 
 const ICONS: Record<string, React.ComponentType<{ size?: number }>> = {
   youtube: FaYoutube,
@@ -21,13 +22,14 @@ const STATS: Record<string, string> = {
   Telegram: "98K Members",
 };
 
-export function FollowSection() {
+export async function FollowSection() {
+  const dict = getDictionary(await getLocale());
   return (
     <section className="py-10 sm:py-12">
       <Container>
         <div className="mb-6 text-center">
-          <span className="mb-1 block text-xs font-bold uppercase tracking-widest text-brand">Stay Connected</span>
-          <h2 className="font-serif text-2xl font-bold sm:text-3xl">Follow The Top Interview</h2>
+          <span className="mb-1 block text-xs font-bold uppercase tracking-widest text-brand">{dict.home.followSection.eyebrow}</span>
+          <h2 className="font-serif text-2xl font-bold sm:text-3xl">{dict.home.followSection.title}</h2>
         </div>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
           {SOCIAL_LINKS.map((s) => {

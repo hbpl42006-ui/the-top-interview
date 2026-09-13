@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { getBreakingNews, getLatestNews } from "@/lib/data/news";
+import { getLocale, getDictionary } from "@/lib/i18n";
 
 export async function BreakingTicker() {
+  const dict = getDictionary(await getLocale());
   const breaking = await getBreakingNews();
   const items = breaking.length > 0 ? breaking : await getLatestNews(4);
   const doubled = [...items, ...items];
@@ -14,7 +16,7 @@ export async function BreakingTicker() {
           <span className="relative flex h-2 w-2">
             <span className="absolute inline-flex h-full w-full animate-live-pulse rounded-full bg-white" />
           </span>
-          Breaking
+          {dict.breakingTicker.label}
         </div>
         <div className="relative flex flex-1 overflow-hidden">
           <div className="animate-ticker flex shrink-0 items-center gap-10 whitespace-nowrap py-2 pl-6 pr-10 text-sm">

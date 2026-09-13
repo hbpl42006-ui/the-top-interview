@@ -23,83 +23,71 @@ import { SectionHeading } from "@/components/ui/section-heading";
 import { getActiveTeamMembers } from "@/lib/data/teamMembers";
 import { SITE } from "@/lib/constants";
 import { thumb } from "@/lib/images";
+import { getLocale, getDictionary } from "@/lib/i18n";
 
 export const metadata: Metadata = {
   title: "About Us",
   description: "Who We Are, Our Mission, Our Vision and Journalism Approach at The Top Interview.",
 };
 
-const MISSION_PILLARS = [
-  { icon: MapPin, title: "Ground Reporting" },
-  { icon: MessageSquare, title: "Real Voices" },
-  { icon: Mic, title: "Authentic Interviews" },
-  { icon: Users2, title: "Public Issues" },
-  { icon: ShieldCheck, title: "Responsible Journalism" },
-  { icon: Sparkles, title: "Special Stories" },
-];
-
-const COVERAGE = [
-  { emoji: "📰", label: "News", href: "/news" },
-  { emoji: "📍", label: "Ground Reports", href: "/ground-reports" },
-  { emoji: "🎤", label: "Interviews", href: "/interviews" },
-  { emoji: "🎙", label: "Podcasts", href: "/podcasts" },
-  { emoji: "🎥", label: "Video Reports", href: "/videos" },
-  { emoji: "🔎", label: "Special Reports", href: "/special-reports" },
-  { emoji: "💬", label: "Public Issues", href: "/category/public-issues" },
-  { emoji: "🏙", label: "Local Stories", href: "/category/local-news" },
-  { emoji: "📚", label: "Education", href: "/category/education" },
-  { emoji: "💼", label: "Business", href: "/category/business" },
-  { emoji: "⚽", label: "Sports", href: "/category/sports" },
-  { emoji: "🎭", label: "Entertainment", href: "/category/entertainment" },
-];
-
-const GROUND_JOURNEY = [
-  { icon: MapPin, label: "Location" },
-  { icon: Search, label: "Investigation" },
-  { icon: Mic, label: "Interviews" },
-  { icon: Video, label: "Video" },
-  { icon: BookOpen, label: "Story" },
-];
-
-const INTERVIEW_GUESTS = [
-  "Public Representatives",
-  "Government Officials",
-  "Experts",
-  "Entrepreneurs",
-  "Teachers",
-  "Doctors",
-  "Students",
-  "Social Workers",
-  "Local Residents",
-  "Industry Professionals",
-  "Interesting Personalities",
-];
-
-const EDITORIAL_VALUES = [
-  {
-    icon: FileCheck2,
-    title: "Accuracy",
-    body: "We aim to verify information and present stories responsibly.",
-  },
-  {
-    icon: ShieldCheck,
-    title: "Transparency",
-    body: "We clearly distinguish news, opinion, advertisements, and sponsored content.",
-  },
-  {
-    icon: Users2,
-    title: "People First",
-    body: "We believe the voices of ordinary people and communities deserve attention.",
-  },
-  {
-    icon: Eye,
-    title: "Responsible Journalism",
-    body: "We strive to present information fairly and responsibly.",
-  },
+const COVERAGE_HREFS = [
+  { emoji: "📰", href: "/news" },
+  { emoji: "📍", href: "/ground-reports" },
+  { emoji: "🎤", href: "/interviews" },
+  { emoji: "🎙", href: "/podcasts" },
+  { emoji: "🎥", href: "/videos" },
+  { emoji: "🔎", href: "/special-reports" },
+  { emoji: "💬", href: "/category/public-issues" },
+  { emoji: "🏙", href: "/category/local-news" },
+  { emoji: "📚", href: "/category/education" },
+  { emoji: "💼", href: "/category/business" },
+  { emoji: "⚽", href: "/category/sports" },
+  { emoji: "🎭", href: "/category/entertainment" },
 ];
 
 export default async function AboutPage() {
+  const dict = getDictionary(await getLocale());
+  const d = dict.about;
   const teamMembers = await getActiveTeamMembers();
+
+  const MISSION_PILLARS = [
+    { icon: MapPin, title: d.coverageLabels.groundReports },
+    { icon: MessageSquare, title: dict.home.publicVoiceSection.newsTips },
+    { icon: Mic, title: d.interviewsHeading },
+    { icon: Users2, title: d.coverageLabels.publicIssues },
+    { icon: ShieldCheck, title: d.values.responsibleTitle },
+    { icon: Sparkles, title: d.coverageLabels.specialReports },
+  ];
+
+  const COVERAGE = [
+    { ...COVERAGE_HREFS[0], label: d.coverageLabels.news },
+    { ...COVERAGE_HREFS[1], label: d.coverageLabels.groundReports },
+    { ...COVERAGE_HREFS[2], label: d.coverageLabels.interviews },
+    { ...COVERAGE_HREFS[3], label: d.coverageLabels.podcasts },
+    { ...COVERAGE_HREFS[4], label: d.coverageLabels.videoReports },
+    { ...COVERAGE_HREFS[5], label: d.coverageLabels.specialReports },
+    { ...COVERAGE_HREFS[6], label: d.coverageLabels.publicIssues },
+    { ...COVERAGE_HREFS[7], label: d.coverageLabels.localStories },
+    { ...COVERAGE_HREFS[8], label: d.coverageLabels.education },
+    { ...COVERAGE_HREFS[9], label: d.coverageLabels.business },
+    { ...COVERAGE_HREFS[10], label: d.coverageLabels.sports },
+    { ...COVERAGE_HREFS[11], label: d.coverageLabels.entertainment },
+  ];
+
+  const GROUND_JOURNEY = [
+    { icon: MapPin, label: d.journeySteps.location },
+    { icon: Search, label: d.journeySteps.investigation },
+    { icon: Mic, label: d.journeySteps.interviews },
+    { icon: Video, label: d.journeySteps.video },
+    { icon: BookOpen, label: d.journeySteps.story },
+  ];
+
+  const EDITORIAL_VALUES = [
+    { icon: FileCheck2, title: d.values.accuracyTitle, body: d.values.accuracyBody },
+    { icon: ShieldCheck, title: d.values.transparencyTitle, body: d.values.transparencyBody },
+    { icon: Users2, title: d.values.peopleFirstTitle, body: d.values.peopleFirstBody },
+    { icon: Eye, title: d.values.responsibleTitle, body: d.values.responsibleBody },
+  ];
 
   return (
     <div className="pb-14">
@@ -117,40 +105,28 @@ export default async function AboutPage() {
           <div className="absolute inset-0 bg-gradient-to-t from-charcoal via-charcoal/70 to-charcoal/30" />
         </div>
         <Container className="relative py-16 text-center sm:py-24">
-          <span className="mb-3 block text-xs font-bold uppercase tracking-[0.25em] text-brand-light">About Us</span>
-          <h1 className="font-serif text-3xl font-extrabold leading-tight sm:text-5xl">
-            ABOUT THE TOP INTERVIEW
-          </h1>
+          <span className="mb-3 block text-xs font-bold uppercase tracking-[0.25em] text-brand-light">{d.eyebrow}</span>
+          <h1 className="font-serif text-3xl font-extrabold leading-tight sm:text-5xl">{d.heading}</h1>
           <p className="mx-auto mt-4 max-w-xl font-serif text-lg italic text-white/85 sm:text-xl">
             &ldquo;{SITE.tagline}&rdquo;
           </p>
-          <p className="mx-auto mt-5 max-w-2xl text-sm text-white/80 sm:text-base">
-            {SITE.name} is a ground-reporting and interview-based digital news channel that brings real stories,
-            real people, and real voices directly from the ground.
-          </p>
+          <p className="mx-auto mt-5 max-w-2xl text-sm text-white/80 sm:text-base">{d.intro}</p>
         </Container>
       </section>
 
       {/* Who We Are */}
       <Container className="mt-14 max-w-4xl">
-        <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-brand">Who We Are</span>
-        <h2 className="font-serif text-2xl font-bold sm:text-3xl">A Digital News &amp; Media Platform</h2>
-        <p className="mt-4 text-muted">
-          {SITE.name} is a digital news and media platform focused on ground reporting, interviews, public issues,
-          local stories, special reports, videos, and podcasts.
-        </p>
-        <p className="mt-4 text-muted">
-          Our team goes directly to the ground, meets people, talks to local communities, speaks with experts and
-          officials, and presents stories from the actual location. The goal is to give audiences a better
-          understanding of what is really happening beyond headlines and social media posts.
-        </p>
+        <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-brand">{d.whoWeAreEyebrow}</span>
+        <h2 className="font-serif text-2xl font-bold sm:text-3xl">{d.whoWeAreHeading}</h2>
+        <p className="mt-4 text-muted">{d.whoWeAreP1}</p>
+        <p className="mt-4 text-muted">{d.whoWeAreP2}</p>
       </Container>
 
       {/* Mission */}
       <Container className="mt-14">
         <div className="rounded-lg border-l-4 border-brand bg-surface-muted p-6 sm:p-8">
           <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-brand">
-            <Target size={14} /> Our Mission
+            <Target size={14} /> {d.missionEyebrow}
           </p>
           <p className="mt-2 max-w-3xl font-serif text-xl font-semibold leading-snug sm:text-2xl">
             {SITE.mission}
@@ -169,21 +145,15 @@ export default async function AboutPage() {
       {/* Vision */}
       <Container className="mt-14 max-w-4xl">
         <span className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-brand">
-          <Eye size={14} /> Our Vision
+          <Eye size={14} /> {d.visionEyebrow}
         </span>
-        <h2 className="font-serif text-2xl font-bold sm:text-3xl">
-          A Trusted Network Built On Real Stories
-        </h2>
-        <p className="mt-4 text-muted">
-          To build a trusted digital media network where real stories, real people, and real voices are at the
-          center of journalism. We aim to expand ground reporting across cities, districts, states, and eventually
-          different parts of India.
-        </p>
+        <h2 className="font-serif text-2xl font-bold sm:text-3xl">{d.visionHeading}</h2>
+        <p className="mt-4 text-muted">{d.visionBody}</p>
       </Container>
 
       {/* What We Cover */}
       <Container className="mt-14">
-        <SectionHeading eyebrow="Coverage" title="What We Cover" />
+        <SectionHeading eyebrow={d.coverageEyebrow} title={d.coverageHeading} />
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
           {COVERAGE.map((c) => (
             <Link
@@ -201,12 +171,9 @@ export default async function AboutPage() {
       {/* Ground Reporting */}
       <section className="mt-14 bg-charcoal text-white">
         <Container className="py-12 sm:py-14">
-          <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-brand-light">Ground Reporting</span>
-          <h2 className="font-serif text-2xl font-extrabold sm:text-3xl">WE GO TO THE GROUND</h2>
-          <p className="mt-3 max-w-2xl text-white/80">
-            We don&apos;t just report from a desk. We go to the location, meet the people, ask questions,
-            understand the situation, and show the story to our audience.
-          </p>
+          <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-brand-light">{d.groundReportingEyebrow}</span>
+          <h2 className="font-serif text-2xl font-extrabold sm:text-3xl">{d.groundReportingHeading}</h2>
+          <p className="mt-3 max-w-2xl text-white/80">{d.groundReportingBody}</p>
 
           <div className="mt-8 flex flex-wrap items-center gap-3 sm:gap-4">
             {GROUND_JOURNEY.map((step, i) => (
@@ -226,52 +193,46 @@ export default async function AboutPage() {
             href="/ground-reports"
             className="mt-8 inline-flex items-center gap-2 rounded-sm bg-brand px-7 py-3.5 text-sm font-extrabold uppercase tracking-wide text-white transition hover:bg-brand-dark"
           >
-            Explore Ground Reports <ArrowRight size={16} />
+            {d.exploreGroundReports} <ArrowRight size={16} />
           </Link>
         </Container>
       </section>
 
       {/* Interviews */}
       <Container className="mt-14">
-        <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-brand">Interviews</span>
-        <h2 className="font-serif text-2xl font-bold sm:text-3xl">THE TOP INTERVIEW</h2>
-        <p className="mt-3 max-w-2xl text-muted">
-          We conduct conversations with people from every walk of life — bringing perspective, accountability and
-          context to the issues that matter.
-        </p>
+        <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-brand">{d.interviewsEyebrow}</span>
+        <h2 className="font-serif text-2xl font-bold sm:text-3xl">{d.interviewsHeading}</h2>
+        <p className="mt-3 max-w-2xl text-muted">{d.interviewsBody}</p>
         <div className="mt-5 flex flex-wrap gap-2">
-          {INTERVIEW_GUESTS.map((g) => (
+          {d.guestTypes.map((g) => (
             <span key={g} className="rounded-full border border-border px-3.5 py-1.5 text-sm font-medium">
               {g}
             </span>
           ))}
         </div>
         <Link href="/interviews" className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-brand hover:gap-3">
-          Watch Interviews <ArrowRight size={16} />
+          {d.watchInterviews} <ArrowRight size={16} />
         </Link>
       </Container>
 
       {/* Podcast */}
       <Container className="mt-14">
         <div className="rounded-lg border border-border bg-surface-muted p-6 sm:p-8">
-          <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-brand">Podcast</span>
+          <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-brand">{d.podcastEyebrow}</span>
           <h2 className="font-serif text-2xl font-bold sm:text-3xl">{SITE.podcastBrand.toUpperCase()}</h2>
-          <p className="mt-3 max-w-2xl text-muted">
-            Our podcast division focuses on long-form conversations, opinions, experiences, expert discussions,
-            inspiring stories, and the important topics that deserve more than a headline.
-          </p>
+          <p className="mt-3 max-w-2xl text-muted">{d.podcastBody}</p>
           <Link
             href="/podcasts"
             className="mt-5 inline-flex items-center gap-2 rounded-sm bg-brand px-6 py-3 text-sm font-bold uppercase tracking-wide text-white transition hover:bg-brand-dark"
           >
-            Explore Podcasts <ArrowRight size={16} />
+            {d.explorePodcasts} <ArrowRight size={16} />
           </Link>
         </div>
       </Container>
 
       {/* Editorial Values */}
       <Container className="mt-14">
-        <SectionHeading eyebrow="Our Standards" title="Editorial Values" />
+        <SectionHeading eyebrow={d.editorialValuesEyebrow} title={d.editorialValuesHeading} />
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {EDITORIAL_VALUES.map((v) => (
             <div key={v.title} className="rounded-lg border border-border p-5">
@@ -286,7 +247,7 @@ export default async function AboutPage() {
       {/* Team */}
       {teamMembers.length > 0 && (
         <Container id="team" className="mt-14 scroll-mt-20">
-          <SectionHeading eyebrow="The People Behind The Stories" title="Meet Our Team" />
+          <SectionHeading eyebrow={d.teamEyebrow} title={d.teamHeading} />
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {teamMembers.map((m) => (
               <div key={m.id} className="rounded-lg border border-border p-5">
@@ -332,20 +293,20 @@ export default async function AboutPage() {
       <section className="mt-16 bg-brand text-white">
         <Container className="flex flex-col items-center gap-4 py-12 text-center sm:py-14">
           <Megaphone size={32} />
-          <h2 className="font-serif text-2xl font-extrabold sm:text-3xl">HAVE A STORY TO SHARE?</h2>
-          <p className="max-w-xl text-white/85">Something important is happening in your area? Tell us.</p>
+          <h2 className="font-serif text-2xl font-extrabold sm:text-3xl">{d.ctaHeading}</h2>
+          <p className="max-w-xl text-white/85">{d.ctaBody}</p>
           <div className="flex flex-wrap items-center justify-center gap-4">
             <Link
               href="/public-voice"
               className="rounded-sm bg-charcoal px-7 py-3.5 text-sm font-extrabold uppercase tracking-wide text-white transition hover:bg-black"
             >
-              Send News Tip
+              {d.sendNewsTip}
             </Link>
             <Link
               href="/contact"
               className="rounded-sm border-2 border-white px-7 py-3.5 text-sm font-extrabold uppercase tracking-wide text-white transition hover:bg-white hover:text-brand"
             >
-              Contact Us
+              {d.contactUs}
             </Link>
           </div>
         </Container>

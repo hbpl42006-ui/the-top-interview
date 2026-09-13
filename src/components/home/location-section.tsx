@@ -3,13 +3,15 @@ import { MapPin } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { getAllStates } from "@/lib/data/locations";
+import { getLocale, getDictionary } from "@/lib/i18n";
 
 export async function LocationSection() {
+  const dict = getDictionary(await getLocale());
   const states = await getAllStates();
   return (
     <section className="py-10 sm:py-12">
       <Container>
-        <SectionHeading eyebrow="Reporting Footprint" title="News By Location" href="/location" hrefLabel="View Map" />
+        <SectionHeading eyebrow={dict.home.location.eyebrow} title={dict.home.location.title} href="/location" hrefLabel={dict.home.location.viewMap} />
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {states.map((s) => (
             <Link
@@ -24,7 +26,7 @@ export async function LocationSection() {
                 <p className="mt-2 text-xs text-muted">{s.cities.slice(0, 4).join(" · ")}</p>
               </div>
               <p className="mt-4 text-xs font-bold uppercase tracking-wide text-muted">
-                {s.storyCount} Stories Reported
+                {s.storyCount} {dict.home.location.storiesReported}
               </p>
             </Link>
           ))}

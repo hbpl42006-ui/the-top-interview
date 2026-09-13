@@ -1,5 +1,4 @@
 import type { MetadataRoute } from "next";
-import { SITE } from "@/lib/constants";
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -10,6 +9,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ["/admin", "/api"],
       },
     ],
-    sitemap: `${SITE.url}/sitemap.xml`,
+    sitemap: "https://www.thetopinterview.com/sitemap.xml",
   };
 }

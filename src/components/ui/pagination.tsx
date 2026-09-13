@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { getLocale, getDictionary } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
-export function Pagination({
+export async function Pagination({
   page,
   totalPages,
   basePath,
@@ -14,6 +15,7 @@ export function Pagination({
   query?: Record<string, string | undefined>;
 }) {
   if (totalPages <= 1) return null;
+  const dict = getDictionary(await getLocale());
 
   function hrefFor(p: number) {
     const params = new URLSearchParams();
@@ -38,7 +40,7 @@ export function Pagination({
         <ChevronLeft size={16} />
       </Link>
       <span className="px-3 text-sm text-muted">
-        Page <span className="font-bold text-foreground">{page}</span> of {totalPages}
+        {dict.pagination.pageLabel} <span className="font-bold text-foreground">{page}</span> {dict.pagination.ofLabel} {totalPages}
       </span>
       <Link
         href={hrefFor(Math.min(totalPages, page + 1))}

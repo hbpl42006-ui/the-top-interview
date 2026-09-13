@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import { Inter, Source_Serif_4 } from "next/font/google";
 import "./globals.css";
 import { SITE } from "@/lib/constants";
+import { getLocale } from "@/lib/i18n";
 import { ThemeProvider } from "@/components/providers/theme-provider";
+import { LanguageProvider } from "@/components/providers/language-provider";
 import { PodcastPlayerProvider } from "@/components/podcast/podcast-player-context";
 
 const inter = Inter({
@@ -40,7 +42,8 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const locale = await getLocale();
   const orgSchema = {
     "@context": "https://schema.org",
     "@type": "NewsMediaOrganization",
@@ -58,7 +61,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <html
-      lang="en"
+      lang={locale}
       suppressHydrationWarning
       className={`${inter.variable} ${sourceSerif.variable} h-full antialiased`}
     >
@@ -68,15 +71,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           dangerouslySetInnerHTML={{ __html: JSON.stringify(orgSchema) }}
         />
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <PodcastPlayerProvider>
-            <a
-              href="#main-content"
-              className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-100 focus:rounded focus:bg-brand focus:px-4 focus:py-2 focus:text-white"
-            >
-              Skip to content
-            </a>
-            {children}
-          </PodcastPlayerProvider>
+          <LanguageProvider initialLocale={locale}>
+            <PodcastPlayerProvider>
+              <a
+                href="#main-content"
+                className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-100 focus:rounded focus:bg-brand focus:px-4 focus:py-2 focus:text-white"
+              >
+                Skip to content
+              </a>
+              {children}
+            </PodcastPlayerProvider>
+          </LanguageProvider>
         </ThemeProvider>
       </body>
     </html>

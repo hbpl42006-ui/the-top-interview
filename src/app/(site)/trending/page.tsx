@@ -4,6 +4,7 @@ import { Flame } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { getTrendingNews } from "@/lib/data/news";
 import { formatViews } from "@/lib/utils";
+import { getLocale, getDictionary } from "@/lib/i18n";
 
 export const metadata: Metadata = {
   title: "Trending Now",
@@ -12,14 +13,15 @@ export const metadata: Metadata = {
 
 export default async function TrendingPage() {
   const items = await getTrendingNews(16);
+  const dict = getDictionary(await getLocale());
 
   return (
     <div className="py-8 sm:py-10">
       <Container className="max-w-3xl">
         <span className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-brand">
-          <Flame size={14} /> Right Now
+          <Flame size={14} /> {dict.home.trending.eyebrow}
         </span>
-        <h1 className="font-serif text-3xl font-extrabold sm:text-4xl">Trending Now</h1>
+        <h1 className="font-serif text-3xl font-extrabold sm:text-4xl">{dict.home.trending.title}</h1>
 
         <ol className="mt-8 divide-y divide-border">
           {items.map((item, idx) => (
@@ -36,7 +38,7 @@ export default async function TrendingPage() {
                   <h3 className="line-clamp-1 font-semibold transition group-hover:text-brand">{item.headline}</h3>
                 </div>
                 <span className="hidden shrink-0 text-xs font-semibold text-muted sm:block">
-                  {formatViews(item.views)} views
+                  {formatViews(item.views)} {dict.listingPages.trending.views}
                 </span>
               </Link>
             </li>

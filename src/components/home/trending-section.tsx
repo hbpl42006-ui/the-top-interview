@@ -4,15 +4,17 @@ import { Container } from "@/components/ui/container";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { getTrendingNews } from "@/lib/data/news";
 import { formatViews } from "@/lib/utils";
+import { getLocale, getDictionary } from "@/lib/i18n";
 
 export async function TrendingSection() {
+  const dict = getDictionary(await getLocale());
   const items = await getTrendingNews(5);
   if (items.length === 0) return null;
 
   return (
     <section className="py-10 sm:py-12">
       <Container>
-        <SectionHeading eyebrow="Right Now" title="Trending Now" href="/trending" />
+        <SectionHeading eyebrow={dict.home.trending.eyebrow} title={dict.home.trending.title} href="/trending" />
         <ol className="divide-y divide-border">
           {items.map((item, idx) => (
             <li key={item.slug}>
@@ -28,7 +30,7 @@ export async function TrendingSection() {
                   <h3 className="line-clamp-1 font-semibold transition group-hover:text-brand">{item.headline}</h3>
                 </div>
                 <span className="hidden shrink-0 items-center gap-1 text-xs font-semibold text-muted sm:flex">
-                  <Flame size={13} className="text-brand" /> {formatViews(item.views)} views
+                  <Flame size={13} className="text-brand" /> {formatViews(item.views)} {dict.home.trending.views}
                 </span>
               </Link>
             </li>

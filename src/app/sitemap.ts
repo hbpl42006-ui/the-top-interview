@@ -1,14 +1,12 @@
-import type { MetadataRoute } from "next";
-import { SITE, CATEGORIES } from "@/lib/constants";
-import { getAllNews } from "@/lib/data/news";
-import { getAllGroundReports } from "@/lib/data/groundReports";
-import { getAllInterviews } from "@/lib/data/interviews";
-import { getAllEpisodes } from "@/lib/data/podcasts";
-import { getAllVideos } from "@/lib/data/videos";
-import { getAllSpecialReports } from "@/lib/data/specialReports";
-import { getAllStates } from "@/lib/data/locations";
-import { getAllReporters } from "@/lib/data/reporters";
+﻿import type { MetadataRoute } from "next";
+import { CATEGORIES } from "@/lib/constants";
+import { prisma } from "@/lib/prisma";
 import { categorySlug } from "@/lib/utils";
+
+const BASE_URL = "https://www.thetopinterview.com";
+
+// Refresh published URLs without requiring another deployment.
+export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticRoutes = [
@@ -21,7 +19,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/special-reports",
     "/category",
     "/location",
-    "/search",
     "/trending",
     "/about",
     "/contact",
@@ -33,61 +30,62 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/editorial-policy",
     "/corrections-policy",
     "/fact-check-policy",
-  ].map((path) => ({ url: `${SITE.url}${path}`, lastModified: new Date() }));
+  ].map((path) => ({ url: `${BASE_URL}${path}` }));
 
-  const [newsArticles, groundReportRows, interviewRows, episodeRows, videoRows, specialReportRows, states, reporters] =
+  // The public data layer allows PUBLISHED records with a null publishedAt.
+  // Also exclude future dates, even if a record was marked PUBLISHED early.
+  const publishedWhere = {
+    status: "PUBLISHED" as const,
+    OR: [{ publishedAt: null }, { publishedAt: { lte: new Date() } }],
+  };
+  const updatedSelect = { slug: true, updatedAt: true } as const;
+  const publishedSelect = { slug: true, publishedAt: true } as const;
+
+  // Existing listing helpers load bodies and relations; sitemap queries only
+  // select URL and timestamp fields through the shared Prisma singleton.
+  // Let database errors propagate rather than caching an incomplete sitemap.
+  const [news, groundReports, interviews, episodes, videos, specialReports, categories, states, reporters] =
     await Promise.all([
-      getAllNews(),
-      getAllGroundReports(),
-      getAllInterviews(),
-      getAllEpisodes(),
-      getAllVideos(),
-      getAllSpecialReports(),
-      getAllStates(),
-      getAllReporters(),
+      prisma.newsArticle.findMany({ where: publishedWhere, select: updatedSelect }),
+      prisma.groundReport.findMany({ where: publishedWhere, select: updatedSelect }),
+      prisma.interview.findMany({ where: publishedWhere, select: updatedSelect }),
+      prisma.podcastEpisode.findMany({ where: publishedWhere, select: publishedSelect }),
+      prisma.video.findMany({ where: publishedWhere, select: publishedSelect }),
+      prisma.specialReport.findMany({ where: publishedWhere, select: publishedSelect }),
+      prisma.category.findMany({ select: { slug: true, name: true } }),
+      prisma.state.findMany({ select: { slug: true } }),
+      prisma.reporter.findMany({ select: { slug: true, updatedAt: true } }),
     ]);
 
-  const news = newsArticles.map((a) => ({
-    url: `${SITE.url}/news/${a.slug}`,
-    lastModified: new Date(a.updatedAt ?? a.publishedAt),
-  }));
-  const groundReports = groundReportRows.map((r) => ({
-    url: `${SITE.url}/ground-report/${r.slug}`,
-    lastModified: new Date(r.publishedAt),
-  }));
-  const interviews = interviewRows.map((i) => ({
-    url: `${SITE.url}/interview/${i.slug}`,
-    lastModified: new Date(i.publishedAt),
-  }));
-  const episodes = episodeRows.map((e) => ({
-    url: `${SITE.url}/podcast/${e.slug}`,
-    lastModified: new Date(e.publishedAt),
-  }));
-  const videos = videoRows.map((v) => ({
-    url: `${SITE.url}/video/${v.slug}`,
-    lastModified: new Date(v.publishedAt),
-  }));
-  const specialReports = specialReportRows.map((s) => ({
-    url: `${SITE.url}/special-report/${s.slug}`,
-    lastModified: new Date(s.publishedAt),
-  }));
-  const categories = CATEGORIES.map((c) => ({
-    url: `${SITE.url}/category/${categorySlug(c)}`,
-    lastModified: new Date(),
-  }));
-  const locations = states.map((s) => ({ url: `${SITE.url}/location/${s.slug}`, lastModified: new Date() }));
-  const reporterPages = reporters.map((r) => ({ url: `${SITE.url}/reporter/${r.slug}`, lastModified: new Date() }));
+  function entries(
+    path: string,
+    rows: { slug: string; updatedAt?: Date; publishedAt?: Date | null }[],
+  ): MetadataRoute.Sitemap {
+    return rows.filter((row) => row.slug.trim().length > 0).map((row) => {
+      const lastModified = row.updatedAt ?? row.publishedAt;
+      return {
+        url: `${BASE_URL}/${path}/${encodeURIComponent(row.slug)}`,
+        ...(lastModified ? { lastModified } : {}),
+      };
+    });
+  }
+
+  // The category route resolves names from CATEGORIES, not arbitrary DB slugs.
+  // Keep database slugs only when they resolve to the same category page.
+  const routableCategories = categories.filter((category) =>
+    CATEGORIES.some((name) => name === category.name && categorySlug(name) === category.slug),
+  );
 
   return [
     ...staticRoutes,
-    ...news,
-    ...groundReports,
-    ...interviews,
-    ...episodes,
-    ...videos,
-    ...specialReports,
-    ...categories,
-    ...locations,
-    ...reporterPages,
+    ...entries("news", news),
+    ...entries("ground-report", groundReports),
+    ...entries("interview", interviews),
+    ...entries("podcast", episodes),
+    ...entries("video", videos),
+    ...entries("special-report", specialReports),
+    ...entries("category", routableCategories),
+    ...entries("location", states),
+    ...entries("reporter", reporters),
   ];
 }

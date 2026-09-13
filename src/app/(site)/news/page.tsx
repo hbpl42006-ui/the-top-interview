@@ -6,6 +6,7 @@ import { Pagination } from "@/components/ui/pagination";
 import { getPaginatedNews } from "@/lib/data/news";
 import { CATEGORIES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
+import { getLocale, getDictionary } from "@/lib/i18n";
 
 export const metadata: Metadata = {
   title: "Latest News",
@@ -20,14 +21,14 @@ export default async function NewsPage({
   const { category, page } = await searchParams;
   const currentPage = Math.max(1, Number(page) || 1);
   const { items, totalPages } = await getPaginatedNews({ page: currentPage, pageSize: 12, category });
+  const dict = getDictionary(await getLocale());
+  const d = dict.listingPages.news;
 
   return (
     <div className="py-8 sm:py-10">
       <Container>
-        <h1 className="font-serif text-3xl font-extrabold sm:text-4xl">Latest News</h1>
-        <p className="mt-2 max-w-2xl text-muted">
-          Ground reports, breaking updates and public-interest stories from across India.
-        </p>
+        <h1 className="font-serif text-3xl font-extrabold sm:text-4xl">{d.heading}</h1>
+        <p className="mt-2 max-w-2xl text-muted">{d.intro}</p>
 
         <div className="mt-6 flex flex-wrap gap-2 border-b border-border pb-6">
           <Link
@@ -37,7 +38,7 @@ export default async function NewsPage({
               !category ? "border-brand bg-brand text-white" : "border-border text-muted hover:border-brand hover:text-brand"
             )}
           >
-            All
+            {dict.common.allFilter}
           </Link>
           {CATEGORIES.map((c) => (
             <Link
@@ -55,8 +56,8 @@ export default async function NewsPage({
 
         {items.length === 0 ? (
           <div className="py-16 text-center text-muted">
-            <p className="text-lg font-semibold">No stories found in this category yet.</p>
-            <p className="mt-1 text-sm">Check back soon, or explore another category above.</p>
+            <p className="text-lg font-semibold">{d.noResults}</p>
+            <p className="mt-1 text-sm">{d.noResultsHint}</p>
           </div>
         ) : (
           <>

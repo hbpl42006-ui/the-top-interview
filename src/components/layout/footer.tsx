@@ -6,6 +6,7 @@ import { Logo } from "@/components/layout/logo";
 import { SITE, SOCIAL_LINKS } from "@/lib/constants";
 import { NewsletterForm } from "@/components/home/newsletter-section";
 import { AdSlot } from "@/components/ads/ad-slot";
+import { getLocale, getDictionary } from "@/lib/i18n";
 
 const ICONS: Record<string, React.ComponentType<{ size?: number }>> = {
   youtube: FaYoutube,
@@ -16,7 +17,9 @@ const ICONS: Record<string, React.ComponentType<{ size?: number }>> = {
   telegram: Send,
 };
 
-export function Footer() {
+export async function Footer() {
+  const dict = getDictionary(await getLocale());
+
   return (
     <footer className="mt-16 border-t border-border bg-surface pb-24 pt-8 lg:pb-12">
       <Container className="mb-8">
@@ -26,7 +29,7 @@ export function Footer() {
         <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-5">
           <div className="sm:col-span-2 lg:col-span-2">
             <Logo />
-            <p className="mt-3 max-w-xs text-sm text-muted">{SITE.tagline}</p>
+            <p className="mt-3 max-w-xs text-sm text-muted">{dict.footer.tagline}</p>
             <div className="mt-4 flex flex-wrap gap-2">
               {SOCIAL_LINKS.map((s) => {
                 const Icon = ICONS[s.icon];
@@ -50,44 +53,44 @@ export function Footer() {
           </div>
 
           <FooterColumn
-            title="News"
+            title={dict.footer.newsColumn}
             links={[
-              { label: "Ground Reports", href: "/ground-reports" },
-              { label: "Interviews", href: "/interviews" },
-              { label: "Videos", href: "/videos" },
-              { label: "Podcasts", href: "/podcasts" },
-              { label: "Special Reports", href: "/special-reports" },
-              { label: "Trending", href: "/trending" },
+              { label: dict.footer.groundReports, href: "/ground-reports" },
+              { label: dict.footer.interviews, href: "/interviews" },
+              { label: dict.footer.videos, href: "/videos" },
+              { label: dict.footer.podcasts, href: "/podcasts" },
+              { label: dict.footer.specialReports, href: "/special-reports" },
+              { label: dict.footer.trending, href: "/trending" },
             ]}
           />
           <FooterColumn
-            title="Company"
+            title={dict.footer.companyColumn}
             links={[
-              { label: "About Us", href: "/about" },
-              { label: "Our Team", href: "/about#team" },
-              { label: "Contact", href: "/contact" },
-              { label: "Careers", href: "/contact?department=Careers" },
-              { label: "Advertise With Us", href: "/contact?department=Advertising" },
-              { label: "Public Voice", href: "/public-voice" },
+              { label: dict.footer.aboutUs, href: "/about" },
+              { label: dict.footer.ourTeam, href: "/about#team" },
+              { label: dict.footer.contact, href: "/contact" },
+              { label: dict.footer.careers, href: "/contact?department=Careers" },
+              { label: dict.footer.advertiseWithUs, href: "/contact?department=Advertising" },
+              { label: dict.footer.publicVoice, href: "/public-voice" },
             ]}
           />
           <FooterColumn
-            title="Legal"
+            title={dict.footer.legalColumn}
             links={[
-              { label: "Privacy Policy", href: "/privacy-policy" },
-              { label: "Terms & Conditions", href: "/terms" },
-              { label: "Disclaimer", href: "/disclaimer" },
-              { label: "Editorial Policy", href: "/editorial-policy" },
-              { label: "Corrections Policy", href: "/corrections-policy" },
-              { label: "Fact-Check Policy", href: "/fact-check-policy" },
+              { label: dict.footer.privacyPolicy, href: "/privacy-policy" },
+              { label: dict.footer.terms, href: "/terms" },
+              { label: dict.footer.disclaimer, href: "/disclaimer" },
+              { label: dict.footer.editorialPolicy, href: "/editorial-policy" },
+              { label: dict.footer.correctionsPolicy, href: "/corrections-policy" },
+              { label: dict.footer.factCheckPolicy, href: "/fact-check-policy" },
             ]}
           />
         </div>
 
         <div className="mt-10 flex flex-col items-center justify-between gap-3 border-t border-border pt-6 text-xs text-muted sm:flex-row">
-          <p>&copy; 2026 The Top Interview. All Rights Reserved.</p>
+          <p>&copy; 2026 {SITE.name}. {dict.footer.rights}</p>
           <p>
-            Built for authentic, ground-level journalism &middot; <Link href="/sitemap.xml" className="hover:text-brand">Sitemap</Link>
+            {dict.footer.builtFor} &middot; <Link href="/sitemap.xml" className="hover:text-brand">{dict.footer.sitemap}</Link>
           </p>
         </div>
       </Container>

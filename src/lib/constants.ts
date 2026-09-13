@@ -42,17 +42,17 @@ export const DEPARTMENTS = [
 ] as const;
 
 export const MAIN_NAV = [
-  { label: "Home", href: "/" },
-  { label: "Ground Reports", href: "/ground-reports" },
-  { label: "News", href: "/news" },
-  { label: "Interviews", href: "/interviews" },
-  { label: "Podcasts", href: "/podcasts" },
-  { label: "Videos", href: "/videos" },
-  { label: "About", href: "/about" },
-  { label: "Contact Us", href: "/contact" },
-  { label: "Special Reports", href: "/special-reports" },
-  { label: "Categories", href: "/category" },
-];
+  { label: "Home", href: "/", key: "home" },
+  { label: "Ground Reports", href: "/ground-reports", key: "groundReports" },
+  { label: "News", href: "/news", key: "news" },
+  { label: "Interviews", href: "/interviews", key: "interviews" },
+  { label: "Podcasts", href: "/podcasts", key: "podcasts" },
+  { label: "Videos", href: "/videos", key: "videos" },
+  { label: "About", href: "/about", key: "about" },
+  { label: "Contact Us", href: "/contact", key: "contactUs" },
+  { label: "Special Reports", href: "/special-reports", key: "specialReports" },
+  { label: "Categories", href: "/category", key: "categories" },
+] as const;
 
 export const MOBILE_NAV = [
   { label: "Home", href: "/", icon: "home" },

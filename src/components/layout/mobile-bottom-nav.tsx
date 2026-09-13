@@ -3,20 +3,22 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, Newspaper, PlaySquare, Mic2, Search } from "lucide-react";
+import { useLanguage } from "@/components/providers/language-provider";
 import { cn } from "@/lib/utils";
 
 const ICONS = { home: Home, newspaper: Newspaper, play: PlaySquare, mic: Mic2, search: Search };
 
 const ITEMS = [
-  { label: "Home", href: "/", icon: "home" },
-  { label: "News", href: "/news", icon: "newspaper" },
-  { label: "Videos", href: "/videos", icon: "play" },
-  { label: "Podcasts", href: "/podcasts", icon: "mic" },
-  { label: "Search", href: "/search", icon: "search" },
+  { key: "home", href: "/", icon: "home" },
+  { key: "news", href: "/news", icon: "newspaper" },
+  { key: "videos", href: "/videos", icon: "play" },
+  { key: "podcasts", href: "/podcasts", icon: "mic" },
+  { key: "search", href: "/search", icon: "search" },
 ] as const;
 
 export function MobileBottomNav() {
   const pathname = usePathname();
+  const { dict } = useLanguage();
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 backdrop-blur-sm lg:hidden">
@@ -34,7 +36,7 @@ export function MobileBottomNav() {
                 )}
               >
                 <Icon size={20} />
-                {item.label}
+                {dict.mobileNav[item.key]}
               </Link>
             </li>
           );

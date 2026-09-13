@@ -5,14 +5,16 @@ import { NewsArticle } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { timeAgo } from "@/lib/utils";
 import { cn } from "@/lib/utils";
+import { getLocale, getDictionary } from "@/lib/i18n";
 
-export function NewsCard({
+export async function NewsCard({
   article,
   variant = "default",
 }: {
   article: NewsArticle;
   variant?: "default" | "horizontal" | "compact";
 }) {
+  const dict = getDictionary(await getLocale());
   const href = `/news/${article.slug}`;
 
   if (variant === "compact") {
@@ -38,7 +40,7 @@ export function NewsCard({
           <Image src={article.image} alt={article.headline} fill className="object-cover transition duration-300 group-hover:scale-105" sizes="224px" />
           {article.isBreaking && (
             <Badge variant="live" className="absolute left-2 top-2">
-              Live
+              {dict.common.live}
             </Badge>
           )}
         </div>

@@ -2,8 +2,10 @@ import { Container } from "@/components/ui/container";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { NewsCard } from "@/components/cards/news-card";
 import { getLatestNews } from "@/lib/data/news";
+import { getLocale, getDictionary } from "@/lib/i18n";
 
 export async function LatestNewsSection() {
+  const dict = getDictionary(await getLocale());
   const articles = await getLatestNews(7);
   const [main, ...rest] = articles;
   if (!main) return null;
@@ -11,7 +13,7 @@ export async function LatestNewsSection() {
   return (
     <section className="py-10 sm:py-12">
       <Container>
-        <SectionHeading eyebrow="Just In" title="Latest News" href="/news" />
+        <SectionHeading eyebrow={dict.home.latestNews.eyebrow} title={dict.home.latestNews.title} href="/news" />
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
           <div className="lg:col-span-1">
             <NewsCard article={main} />

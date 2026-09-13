@@ -6,8 +6,10 @@ import { NewsCard } from "@/components/cards/news-card";
 import { getFeaturedNews } from "@/lib/data/news";
 import { getReporterBySlug } from "@/lib/data/reporters";
 import { formatDateTime } from "@/lib/utils";
+import { getLocale, getDictionary } from "@/lib/i18n";
 
 export async function HeroSection() {
+  const dict = getDictionary(await getLocale());
   const featured = await getFeaturedNews();
   const [lead, ...rest] = featured;
   if (!lead) return null;
@@ -32,7 +34,7 @@ export async function HeroSection() {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
                 {lead.type === "ground-report" && (
                   <span className="absolute left-4 top-4 rounded-sm bg-brand px-2.5 py-1 text-xs font-extrabold uppercase tracking-wide text-white">
-                    🔴 Ground Report
+                    {dict.common.groundReportTag}
                   </span>
                 )}
                 <div className="absolute inset-x-0 bottom-0 p-5 text-white sm:p-6">
@@ -64,13 +66,13 @@ export async function HeroSection() {
                 href={`/news/${lead.slug}`}
                 className="flex items-center gap-1 text-sm font-bold text-brand transition hover:gap-2"
               >
-                Read Full Story <ArrowRight size={15} />
+                {dict.common.readFullStory} <ArrowRight size={15} />
               </Link>
             </div>
           </div>
 
           <div className="flex flex-col lg:col-span-1">
-            <h2 className="mb-4 text-xs font-bold uppercase tracking-widest text-muted">More Top Stories</h2>
+            <h2 className="mb-4 text-xs font-bold uppercase tracking-widest text-muted">{dict.common.moreTopStories}</h2>
             <div className="flex flex-col divide-y divide-border">
               {secondary.map((article) => (
                 <div key={article.slug} className="py-4 first:pt-0">

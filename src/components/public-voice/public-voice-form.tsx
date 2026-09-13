@@ -3,12 +3,15 @@
 import { useState, type FormEvent } from "react";
 import { CheckCircle2, Paperclip, AlertTriangle } from "lucide-react";
 import { TIP_CATEGORIES } from "@/lib/constants";
+import { useLanguage } from "@/components/providers/language-provider";
 
 export function PublicVoiceForm({ onSuccess }: { onSuccess?: () => void }) {
   const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
   const [error, setError] = useState("");
   const [fileName, setFileName] = useState<string | null>(null);
   const [consent, setConsent] = useState(false);
+  const { dict } = useLanguage();
+  const d = dict.publicVoiceForm;
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -23,7 +26,7 @@ export function PublicVoiceForm({ onSuccess }: { onSuccess?: () => void }) {
     };
 
     if (!consent) {
-      setError("Please accept the privacy & consent notice to continue.");
+      setError(d.consentRequired);
       return;
     }
 
@@ -37,13 +40,13 @@ export function PublicVoiceForm({ onSuccess }: { onSuccess?: () => void }) {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || "Something went wrong.");
+        throw new Error(data.error || d.genericError);
       }
       setStatus("done");
       onSuccess?.();
     } catch (err) {
       setStatus("error");
-      setError(err instanceof Error ? err.message : "Something went wrong.");
+      setError(err instanceof Error ? err.message : d.genericError);
     }
   }
 
@@ -51,10 +54,8 @@ export function PublicVoiceForm({ onSuccess }: { onSuccess?: () => void }) {
     return (
       <div className="flex flex-col items-center gap-3 rounded-lg border border-border bg-surface-muted p-8 text-center">
         <CheckCircle2 size={40} className="text-brand" />
-        <h3 className="text-lg font-bold">Thank you. Your submission has been received.</h3>
-        <p className="max-w-sm text-sm text-muted">
-          Our editorial team reviews every tip before publication. If we need more details, we&apos;ll reach out using the contact you shared.
-        </p>
+        <h3 className="text-lg font-bold">{d.thankYouTitle}</h3>
+        <p className="max-w-sm text-sm text-muted">{d.thankYouBody}</p>
       </div>
     );
   }
@@ -62,14 +63,14 @@ export function PublicVoiceForm({ onSuccess }: { onSuccess?: () => void }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Full Name" name="name" required placeholder="Your name" />
-        <Field label="Phone or Email" name="contact" required placeholder="+91... or you@email.com" />
+        <Field label={d.fullName} name="name" required placeholder={d.fullNamePlaceholder} />
+        <Field label={d.contact} name="contact" required placeholder={d.contactPlaceholder} />
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Location" name="location" required placeholder="Village / City, State" />
+        <Field label={d.location} name="location" required placeholder={d.locationPlaceholder} />
         <div>
           <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">
-            Category <span className="text-brand">*</span>
+            {d.category} <span className="text-brand">*</span>
           </label>
           <select
             name="category"
@@ -78,7 +79,7 @@ export function PublicVoiceForm({ onSuccess }: { onSuccess?: () => void }) {
             className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand"
           >
             <option value="" disabled>
-              Select a category
+              {d.selectCategory}
             </option>
             {TIP_CATEGORIES.map((c) => (
               <option key={c} value={c}>
@@ -91,14 +92,14 @@ export function PublicVoiceForm({ onSuccess }: { onSuccess?: () => void }) {
 
       <div>
         <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">
-          Description <span className="text-brand">*</span>
+          {d.description} <span className="text-brand">*</span>
         </label>
         <textarea
           name="description"
           required
           minLength={20}
           rows={5}
-          placeholder="Tell us what's happening, where, and who is affected..."
+          placeholder={d.descriptionPlaceholder}
           className="w-full resize-none rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand"
         />
       </div>
@@ -106,7 +107,7 @@ export function PublicVoiceForm({ onSuccess }: { onSuccess?: () => void }) {
       <div>
         <label className="mb-1.5 flex w-fit cursor-pointer items-center gap-2 rounded-sm border border-dashed border-border px-3 py-2.5 text-sm text-muted transition hover:border-brand hover:text-brand">
           <Paperclip size={16} />
-          {fileName || "Upload Photo / Video (optional)"}
+          {fileName || d.uploadOptional}
           <input
             type="file"
             accept="image/*,video/*"
@@ -114,7 +115,7 @@ export function PublicVoiceForm({ onSuccess }: { onSuccess?: () => void }) {
             onChange={(e) => setFileName(e.target.files?.[0]?.name ?? null)}
           />
         </label>
-        <p className="text-xs text-muted">Max 50MB. Uploads are stored securely and reviewed before publication.</p>
+        <p className="text-xs text-muted">{d.uploadHint}</p>
       </div>
 
       <label className="flex items-start gap-2 text-xs text-muted">
@@ -124,11 +125,11 @@ export function PublicVoiceForm({ onSuccess }: { onSuccess?: () => void }) {
           onChange={(e) => setConsent(e.target.checked)}
           className="mt-0.5 h-4 w-4 shrink-0 accent-brand"
         />
-        I consent to The Top Interview reviewing and potentially publishing this information, in line with the{" "}
+        {d.consent}{" "}
         <a href="/privacy-policy" className="text-brand hover:underline">
-          Privacy Policy
+          {d.consentLinkText}
         </a>
-        . My identity will not be disclosed without permission.
+        {d.consentSuffix}
       </label>
 
       {error && (
@@ -142,7 +143,7 @@ export function PublicVoiceForm({ onSuccess }: { onSuccess?: () => void }) {
         disabled={status === "loading"}
         className="w-full rounded-sm bg-brand py-3 text-sm font-bold uppercase tracking-wide text-white transition hover:bg-brand-dark disabled:opacity-60 sm:w-auto sm:px-8"
       >
-        {status === "loading" ? "Submitting..." : "Submit to Editorial Team"}
+        {status === "loading" ? d.submitting : d.submit}
       </button>
     </form>
   );

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Container } from "@/components/ui/container";
 import { getAllSpecialReports } from "@/lib/data/specialReports";
 import { formatDate, formatViews } from "@/lib/utils";
+import { getLocale, getDictionary } from "@/lib/i18n";
 
 export const metadata: Metadata = {
   title: "Special Reports",
@@ -12,16 +13,16 @@ export const metadata: Metadata = {
 
 export default async function SpecialReportsPage() {
   const specialReports = await getAllSpecialReports();
+  const dict = getDictionary(await getLocale());
+  const d = dict.listingPages.specialReports;
   return (
     <div className="bg-ink py-10 text-white sm:py-14">
       <Container>
         <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-brand-light">
-          Investigative &middot; Long-Form
+          {dict.home.specialReportSection.eyebrow}
         </span>
-        <h1 className="font-serif text-3xl font-extrabold sm:text-4xl">Special Reports</h1>
-        <p className="mt-2 max-w-2xl text-white/70">
-          Deep investigations into public issues, backed by documents, data and months of on-ground reporting.
-        </p>
+        <h1 className="font-serif text-3xl font-extrabold sm:text-4xl">{d.heading}</h1>
+        <p className="mt-2 max-w-2xl text-white/70">{d.intro}</p>
 
         <div className="mt-10 grid grid-cols-1 gap-8 lg:grid-cols-2">
           {specialReports.map((r) => (
@@ -34,7 +35,7 @@ export default async function SpecialReportsPage() {
                   <h2 className="font-serif text-xl font-extrabold leading-tight sm:text-2xl">{r.title}</h2>
                   <p className="mt-2 hidden text-sm text-white/80 sm:block">{r.dek}</p>
                   <p className="mt-3 text-xs text-white/60">
-                    {formatDate(r.publishedAt)} &middot; {formatViews(r.views)} views
+                    {formatDate(r.publishedAt)} &middot; {formatViews(r.views)} {d.views}
                   </p>
                 </div>
               </div>

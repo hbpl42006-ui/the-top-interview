@@ -5,11 +5,13 @@ import { usePathname } from "next/navigation";
 import { X, Megaphone } from "lucide-react";
 import { PublicVoiceForm } from "@/components/public-voice/public-voice-form";
 import { usePodcastPlayer } from "@/components/podcast/podcast-player-context";
+import { useLanguage } from "@/components/providers/language-provider";
 
 export function FloatingTipButton() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const { currentEpisode } = usePodcastPlayer();
+  const { dict } = useLanguage();
 
   if (pathname === "/public-voice") return null;
 
@@ -21,7 +23,7 @@ export function FloatingTipButton() {
         style={{ bottom: currentEpisode ? "calc(4.5rem + 76px)" : "5.5rem" }}
       >
         <Megaphone size={18} />
-        <span className="hidden sm:inline">Send Us News</span>
+        <span className="hidden sm:inline">{dict.floatingTip.button}</span>
       </button>
 
       {open && (
@@ -29,13 +31,13 @@ export function FloatingTipButton() {
           <div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-t-xl bg-background p-6 sm:rounded-xl sm:p-8">
             <div className="mb-4 flex items-start justify-between">
               <div>
-                <span className="text-xs font-bold uppercase tracking-widest text-brand">Public Voice</span>
-                <h2 className="font-serif text-xl font-bold sm:text-2xl">Send Us News</h2>
-                <p className="mt-1 text-sm text-muted">Share a tip, local issue, or story idea directly with our editorial desk.</p>
+                <span className="text-xs font-bold uppercase tracking-widest text-brand">{dict.floatingTip.eyebrow}</span>
+                <h2 className="font-serif text-xl font-bold sm:text-2xl">{dict.floatingTip.heading}</h2>
+                <p className="mt-1 text-sm text-muted">{dict.floatingTip.description}</p>
               </div>
               <button
                 onClick={() => setOpen(false)}
-                aria-label="Close"
+                aria-label={dict.floatingTip.close}
                 className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition hover:bg-surface-muted"
               >
                 <X size={20} />

@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { getLocale, getDictionary } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
-export function SectionHeading({
+export async function SectionHeading({
   eyebrow,
   title,
   subtitle,
   href,
-  hrefLabel = "View All",
+  hrefLabel,
   className,
 }: {
   eyebrow?: string;
@@ -17,6 +18,7 @@ export function SectionHeading({
   hrefLabel?: string;
   className?: string;
 }) {
+  const resolvedHrefLabel = hrefLabel ?? getDictionary(await getLocale()).common.viewAll;
   return (
     <div className={cn("mb-6 flex flex-wrap items-end justify-between gap-3 border-b-2 border-charcoal pb-3", className)}>
       <div>
@@ -31,7 +33,7 @@ export function SectionHeading({
           href={href}
           className="flex shrink-0 items-center gap-1 text-sm font-semibold text-brand transition hover:gap-2"
         >
-          {hrefLabel}
+          {resolvedHrefLabel}
           <ArrowRight size={15} />
         </Link>
       )}
