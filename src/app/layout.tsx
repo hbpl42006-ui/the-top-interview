@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { Inter, Source_Serif_4 } from "next/font/google";
 import "./globals.css";
+
 import { SITE } from "@/lib/constants";
 import { getLocale } from "@/lib/i18n";
+
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { LanguageProvider } from "@/components/providers/language-provider";
 import { PodcastPlayerProvider } from "@/components/podcast/podcast-player-context";
@@ -29,10 +31,6 @@ export const metadata: Metadata = {
 
   description: SITE.mission,
 
-  verification: {
-    google: "SHl76yGiNCZRAwlZWlz8rAm6OjKPWKepwiS-R8aDBQE",
-  },
-
   keywords: [
     "ground reports",
     "Indian news",
@@ -41,6 +39,10 @@ export const metadata: Metadata = {
     "local news",
     "The Top Interview",
   ],
+
+  verification: {
+    google: "SHl76yGiNCZRAwlZWlz8rAm6OjKPWKepwiS-R8aDBQE",
+  },
 
   openGraph: {
     type: "website",
@@ -64,9 +66,9 @@ export const metadata: Metadata = {
 
 export default async function RootLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
+}>) {
   const locale = await getLocale();
 
   const orgSchema = {
