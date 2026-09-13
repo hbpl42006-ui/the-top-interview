@@ -23,8 +23,18 @@ const proxiedApiRoutes = [
   "videos",
 ];
 
+const isFrontendDeployment =
+  process.env.APP_DEPLOY_TARGET === "frontend";
+
 const nextConfig: NextConfig = {
   async rewrites() {
+    // Vercel frontend proxies selected API routes to OCI.
+    // OCI backend must serve its own local API routes and must never
+    // proxy them back to api.thetopinterview.com.
+    if (!isFrontendDeployment) {
+      return [];
+    }
+
     return proxiedApiRoutes.flatMap((route) => [
       {
         source: `/api/${route}`,
