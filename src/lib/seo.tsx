@@ -1,5 +1,10 @@
+import type { Metadata } from "next";
 import { SITE } from "@/lib/constants";
 import { NewsArticle } from "@/lib/types";
+
+export function pageMetadata({ title, description, path, keywords = [], image, type = "website" }: { title: string; description: string; path: string; keywords?: string[]; image?: string; type?: "website" | "article" }): Metadata {
+  return { title, description, keywords, alternates: { canonical: path }, openGraph: { type, title, description, url: path, ...(image ? { images: [image] } : {}) }, twitter: { card: image ? "summary_large_image" : "summary", title, description, ...(image ? { images: [image] } : {}) } };
+}
 
 export function newsArticleSchema(article: NewsArticle) {
   return {

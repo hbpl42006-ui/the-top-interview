@@ -5,6 +5,7 @@ import { NewsCard } from "@/components/cards/news-card";
 import { CATEGORIES } from "@/lib/constants";
 import { getArticlesByCategory } from "@/lib/data/news";
 import { categorySlug } from "@/lib/utils";
+import { pageMetadata } from "@/lib/seo";
 
 export function generateStaticParams() {
   return CATEGORIES.map((c) => ({ slug: categorySlug(c) }));
@@ -18,7 +19,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const category = resolveCategory(slug);
   if (!category) return {};
-  return { title: category, description: `Latest ${category} stories from The Top Interview.` };
+  return pageMetadata({ title: `${category} News`, description: `Read the latest ${category} news, updates, interviews and reports from India on The Top Interview.`, path: `/category/${slug}`, keywords: [`${category} news India`, `${category} updates India`, "Indian news"] });
 }
 
 export default async function CategoryPage({ params }: { params: Promise<{ slug: string }> }) {

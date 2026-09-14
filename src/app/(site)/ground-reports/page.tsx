@@ -6,6 +6,8 @@ import { getLocale, getDictionary } from "@/lib/i18n";
 
 export const metadata: Metadata = {
   title: "Ground Reports",
+  keywords: ["ground reports India", "ground journalism India", "local news reports", "field reporting India", "investigative reports India"],
+  alternates: { canonical: "/ground-reports" },
   description: "We go to the ground. We talk to the people. We show you the reality — full ground reporting archive.",
 };
 

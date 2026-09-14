@@ -11,6 +11,7 @@ import { Container } from "@/components/ui/container";
 import { NewsCard } from "@/components/cards/news-card";
 import { GroundReportCard } from "@/components/cards/ground-report-card";
 import { InterviewCard } from "@/components/cards/interview-card";
+import { pageMetadata } from "@/lib/seo";
 
 export async function generateStaticParams() {
   const reporters = await getAllReporters();
@@ -21,7 +22,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const reporter = await getReporterBySlug(slug);
   if (!reporter) return {};
-  return { title: reporter.name, description: reporter.bio };
+  return pageMetadata({ title: `${reporter.name} | Reporter`, description: reporter.bio, path: `/reporter/${reporter.slug}`, keywords: [reporter.name, "Indian journalist", "news reporter India"] });
 }
 
 export default async function ReporterPage({ params }: { params: Promise<{ slug: string }> }) {

@@ -22,8 +22,10 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title: report.title,
     description: report.dek,
+    keywords: ["special reports India", "investigative journalism India", "in-depth reports India", report.location],
     alternates: { canonical: `${SITE.url}/special-report/${report.slug}` },
     openGraph: { type: "article", title: report.title, description: report.dek, images: [report.image] },
+    twitter: { card: "summary_large_image", title: report.title, description: report.dek, images: [report.image] },
   };
 }
 

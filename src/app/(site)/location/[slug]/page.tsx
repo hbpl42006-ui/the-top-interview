@@ -8,6 +8,7 @@ import { MapEmbed } from "@/components/article/map-embed";
 import { getStateBySlug, getAllStates } from "@/lib/data/locations";
 import { getArticlesByState } from "@/lib/data/news";
 import { getGroundReportsByState } from "@/lib/data/groundReports";
+import { pageMetadata } from "@/lib/seo";
 
 export async function generateStaticParams() {
   const states = await getAllStates();
@@ -18,7 +19,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const state = await getStateBySlug(slug);
   if (!state) return {};
-  return { title: `${state.name} News`, description: `Ground reports, interviews and local news from ${state.name}.` };
+  return pageMetadata({ title: `Latest News from ${state.name}`, description: `Read the latest news, local updates, interviews and ground reports from ${state.name} on The Top Interview.`, path: `/location/${state.slug}`, keywords: [`${state.name} news`, `latest news ${state.name}`, `ground reports ${state.name}`, "local news India"] });
 }
 
 export default async function LocationPage({ params }: { params: Promise<{ slug: string }> }) {

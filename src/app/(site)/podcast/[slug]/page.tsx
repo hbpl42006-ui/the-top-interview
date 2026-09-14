@@ -25,8 +25,10 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title: `${episode.title} — ${SITE.podcastBrand}`,
     description: episode.description,
+    keywords: ["news podcasts India", "interview podcasts India", episode.category, episode.guest],
     alternates: { canonical: `${SITE.url}/podcast/${episode.slug}` },
     openGraph: { type: "article", title: episode.title, description: episode.description, images: [episode.cover] },
+    twitter: { card: "summary_large_image", title: episode.title, description: episode.description, images: [episode.cover] },
   };
 }
 

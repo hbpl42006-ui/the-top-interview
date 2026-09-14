@@ -15,6 +15,8 @@ export const metadata: Metadata = {
   title: "Public Voice — Send Us News",
   description:
     "Share a news tip, local issue, photo or video with The Top Interview's editorial team.",
+  keywords: ["public voice India", "citizen journalism India", "submit news India", "report local issue", "citizen reporter India", "share news tip", "community news India"],
+  alternates: { canonical: "/public-voice" },
 };
 
 export default async function PublicVoicePage() {

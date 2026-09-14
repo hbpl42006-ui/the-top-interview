@@ -9,6 +9,8 @@ import { getLocale, getDictionary } from "@/lib/i18n";
 export const metadata: Metadata = {
   title: "Special Reports",
   description: "In-depth, long-form investigative journalism from The Top Interview.",
+  keywords: ["special reports India", "investigative journalism India", "in-depth reports India", "exclusive reports India"],
+  alternates: { canonical: "/special-reports" },
 };
 
 export default async function SpecialReportsPage() {

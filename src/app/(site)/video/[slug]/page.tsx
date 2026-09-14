@@ -29,8 +29,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!video) return {};
   return {
     title: video.title,
+    keywords: ["news videos India", "video interviews India", CATEGORY_LABEL[video.category]],
     description: `Watch: ${video.title} — ${SITE.name}`,
     alternates: { canonical: `${SITE.url}/video/${video.slug}` },
+    openGraph: { type: "article", title: video.title, description: `Watch: ${video.title}`, images: [video.thumbnail] },
+    twitter: { card: "summary_large_image", title: video.title, description: `Watch: ${video.title}`, images: [video.thumbnail] },
   };
 }
 

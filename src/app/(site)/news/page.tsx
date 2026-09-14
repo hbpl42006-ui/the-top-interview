@@ -11,6 +11,8 @@ import { getLocale, getDictionary } from "@/lib/i18n";
 export const metadata: Metadata = {
   title: "Latest News",
   description: "Breaking news, local reporting, politics, business and more from The Top Interview.",
+  keywords: ["latest news India", "breaking news India", "Indian news", "current affairs India", "national news India", "latest headlines India"],
+  alternates: { canonical: "/news" },
 };
 
 export default async function NewsPage({

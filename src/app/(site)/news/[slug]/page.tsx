@@ -32,6 +32,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title: article.headline,
     description: article.excerpt,
+    keywords: ["latest news India", article.category, ...article.tags, ...(article.location ? [article.location] : [])],
     alternates: { canonical: `${SITE.url}/news/${article.slug}` },
     openGraph: {
       type: "article",
@@ -40,7 +41,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       images: [article.image],
       publishedTime: article.publishedAt,
     },
-    twitter: { card: "summary_large_image", title: article.headline, description: article.excerpt },
+    twitter: { card: "summary_large_image", title: article.headline, description: article.excerpt, images: [article.image] },
   };
 }
 

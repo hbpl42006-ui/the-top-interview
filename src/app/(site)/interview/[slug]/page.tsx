@@ -28,8 +28,10 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title: `${interview.guest}: ${interview.topic}`,
     description: interview.excerpt,
+    keywords: ["latest interviews India", "exclusive interviews", interview.category, ...interview.tags],
     alternates: { canonical: `${SITE.url}/interview/${interview.slug}` },
     openGraph: { type: "article", title: interview.guest, description: interview.excerpt, images: [interview.thumbnail] },
+    twitter: { card: "summary_large_image", title: `${interview.guest}: ${interview.topic}`, description: interview.excerpt, images: [interview.thumbnail] },
   };
 }
 

@@ -11,6 +11,8 @@ import { getLocale, getDictionary } from "@/lib/i18n";
 export const metadata: Metadata = {
   title: SITE.podcastBrand,
   description: "Long-form conversations, expert interviews and ground-report debriefs from The Top Interview Podcasts.",
+  keywords: ["news podcasts India", "interview podcasts India", "current affairs podcast India", "political podcast India"],
+  alternates: { canonical: "/podcasts" },
 };
 
 export default async function PodcastsPage({

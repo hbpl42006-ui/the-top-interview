@@ -9,6 +9,8 @@ import { getLocale, getDictionary } from "@/lib/i18n";
 export const metadata: Metadata = {
   title: "Trending Now",
   description: "The most-read stories on The Top Interview right now.",
+  keywords: ["trending news India", "latest trending news", "viral news India", "breaking stories India"],
+  alternates: { canonical: "/trending" },
 };
 
 export default async function TrendingPage() {

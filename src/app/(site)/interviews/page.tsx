@@ -8,6 +8,8 @@ import { getLocale, getDictionary } from "@/lib/i18n";
 
 export const metadata: Metadata = {
   title: "Interviews",
+  keywords: ["latest interviews India", "exclusive interviews", "political interviews India", "business interviews India", "celebrity interviews India", "video interviews India"],
+  alternates: { canonical: "/interviews" },
   description: "The Top Interview — direct conversations with politicians, experts, entrepreneurs, students and everyday people.",
 };
 

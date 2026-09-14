@@ -29,15 +29,10 @@ export const metadata: Metadata = {
     template: `%s | ${SITE.name}`,
   },
 
-  description: SITE.mission,
+  description: "The Top Interview brings you breaking news, exclusive interviews, ground reports, public voices, special reports and current affairs from India.",
 
   keywords: [
-    "ground reports",
-    "Indian news",
-    "interviews",
-    "podcast",
-    "local news",
-    "The Top Interview",
+    "The Top Interview", "latest news India", "breaking news India", "Indian news", "latest interviews", "exclusive interviews", "political interviews India", "business interviews India", "ground reports India", "special reports India", "public voice India", "citizen journalism India", "current affairs India", "politics news India", "business news India", "education news India", "technology news India", "entertainment news India", "sports news India", "Hindi news", "English news India", "video interviews", "news podcasts India",
   ],
 
   verification: {
@@ -54,14 +49,14 @@ export const metadata: Metadata = {
     type: "website",
     siteName: SITE.name,
     title: SITE.name,
-    description: SITE.tagline,
+    description: "Breaking news, interviews and ground reports from India.",
     url: SITE.url,
   },
 
   twitter: {
     card: "summary_large_image",
     title: SITE.name,
-    description: SITE.tagline,
+    description: "Breaking news, interviews and ground reports from India.",
   },
 
   robots: {

@@ -7,6 +7,8 @@ import { getLocale, getDictionary } from "@/lib/i18n";
 export const metadata: Metadata = {
   title: "Top Videos",
   description: "Ground reports, interviews, news and special reports in video from The Top Interview.",
+  keywords: ["news videos India", "video interviews India", "breaking news videos", "latest news videos India", "political videos India"],
+  alternates: { canonical: "/videos" },
 };
 
 export default async function VideosPage() {
