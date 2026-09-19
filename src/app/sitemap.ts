@@ -7,6 +7,7 @@ const BASE_URL = "https://www.thetopinterview.com";
 
 // Refresh published URLs without requiring another deployment.
 export const revalidate = 3600;
+export const dynamic = "force-dynamic";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticRoutes = [
@@ -37,9 +38,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [newsData, groundReportsData, interviewsData, episodesData, videosData, specialReportsData, categoriesData, statesData, reportersData] = await Promise.all([
     fetchApi<SitemapRow[]>("/api/news/articles/?status=PUBLISHED"),
     fetchApi<SitemapRow[]>("/api/news/ground-reports/?status=PUBLISHED"),
-    fetchApi<SitemapRow[]>("/api/media_content/interviews/?status=PUBLISHED"),
-    fetchApi<SitemapRow[]>("/api/media_content/episodes/?status=PUBLISHED"),
-    fetchApi<SitemapRow[]>("/api/media_content/videos/?status=PUBLISHED"),
+    fetchApi<SitemapRow[]>("/api/media/interviews/?status=PUBLISHED"),
+    fetchApi<SitemapRow[]>("/api/media/episodes/?status=PUBLISHED"),
+    fetchApi<SitemapRow[]>("/api/media/videos/?status=PUBLISHED"),
     fetchApi<SitemapRow[]>("/api/news/special-reports/?status=PUBLISHED"),
     fetchApi<CategoryRow[]>("/api/core/categories/"),
     fetchApi<SitemapRow[]>("/api/core/states/"),

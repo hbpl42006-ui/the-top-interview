@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import { apiResults, fetchApi } from "@/lib/api/client";
 import { SubmissionsList } from "./submissions-list";
 
-interface NewsSubmission { id: string; submittedAt: string; [key: string]: unknown }
+interface NewsSubmission { id: string; source: string; name: string; location: string; category: string; description: string; mediaUrl: string | null; status: string; submittedAt: string }
 
 export default async function AdminSubmissionsPage() {
   const session = await auth();

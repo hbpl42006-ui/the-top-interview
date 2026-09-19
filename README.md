@@ -18,7 +18,7 @@ cp .env.example .env
 
 # 3. Install deps, migrate, seed
 npm install
-npx prisma migrate dev --name init
+npm run db:seed
 npm run db:seed
 
 # 4. Run
@@ -35,13 +35,13 @@ Everything below is implemented against a real PostgreSQL database, not mock dat
 
 | Area | Status |
 |---|---|
-| Database | PostgreSQL via Prisma. Schema: `prisma/schema.prisma`. Migrations: `prisma/migrations/` |
+| Database | PostgreSQL via Django ORM. Current migrations live under `backend/*/migrations/`; the legacy SQL migration archive is retained for reference |
 | Public site | Every page (home, news, ground reports, interviews, podcasts, videos, special reports, categories, locations, reporters, trending, search) reads live from Postgres |
 | Admin CMS | Full CRUD for News, Ground Reports, Interviews, Podcasts, Videos, Special Reports, Categories, Locations, Reporters, Users, Comments (moderation), Citizen Submissions, Contact enquiries, Advertisements, Newsletter — all backed by REST API routes under `src/app/api/*` |
 | Authentication | Auth.js v5, credentials + bcrypt, JWT sessions. `/admin/*` is protected by `src/proxy.ts` (Edge-safe check) **and** a server-side session check in every admin layout/page (defense in depth) |
 | Authorization | Role checks (`src/lib/authz.ts`) on every mutating API route — e.g. only `SUPER_ADMIN` can manage Users, only `PODCAST_MANAGER`/`ADMIN`/`SUPER_ADMIN` can manage podcasts |
 | Public forms | Contact, Newsletter, Public Voice and "Send Us News" all validate (Zod), rate-limit per IP, and persist to Postgres |
-| Search | `/api/search` queries Postgres directly (case-insensitive `contains` across news, ground reports, interviews, podcasts, reporters) |
+| Search | `/api/search` proxies Django ORM search across news, ground reports, interviews, podcasts, and reporters |
 | Pagination | `/news` and `/api/news` are paginated (`?page=`) rather than loading everything at once |
 | SEO | Per-page metadata, Open Graph, JSON-LD (NewsArticle/VideoObject/BreadcrumbList/NewsMediaOrganization), dynamic `sitemap.xml`/`robots.txt` — all generated from live DB content |
 
@@ -64,10 +64,9 @@ silent failure if Cloudinary isn't configured).
 ## Database
 
 ```bash
-npx prisma migrate dev --name <description>   # create + apply a migration locally
-npx prisma migrate deploy                      # apply pending migrations in production — never `migrate dev` in prod
-npm run db:seed                                # (re-)seed demo content — safe to re-run, upserts by slug/email
-npx prisma studio                              # browse the database visually
+python backend/manage.py makemigrations       # create Django migrations locally
+python backend/manage.py migrate               # apply migrations
+npm run db:seed                                # seed bootstrap data; safe to re-run
 ```
 
 **Connection limits**: `DATABASE_URL` includes `connection_limit=5` in `.env.example`. Next.js runs multiple
@@ -76,12 +75,12 @@ connection pool — without a limit, a handful of workers can exhaust a small Po
 `max_connections` and produce "Can't reach database server" errors during `next build`. Keep this param (or use
 PgBouncer/Prisma Accelerate in production) rather than removing it.
 
-**Never** run `prisma migrate reset` against a production database — it drops all data. It's fine in local dev.
+Never reset production data; use Django migrations for schema changes.
 
 ## Roles
 
 `SUPER_ADMIN`, `ADMIN`, `EDITOR`, `REPORTER`, `VIDEO_EDITOR`, `PODCAST_MANAGER`, `MODERATOR`, `USER` — defined in
-`prisma/schema.prisma` (`UserRole` enum) and enforced in `src/lib/authz.ts`. Only `SUPER_ADMIN` can manage other
+`backend/accounts/models.py` (`UserRole` choices) and enforced in `src/lib/authz.ts`. Only `SUPER_ADMIN` can manage other
 users; content roles are scoped per section (e.g. `PODCAST_MANAGER` can't delete News).
 
 ## Deploying to Railway
@@ -91,24 +90,20 @@ users; content roles are scoped per section (e.g. `PODCAST_MANAGER` can't delete
    `PGBOUNCER_URL`-style pooled connection if you provision one).
 2. Set the remaining required variables in Railway: `AUTH_SECRET`, `AUTH_URL` (your Railway public domain),
    and any optional ones you want (`CLOUDINARY_*`, etc).
-3. Railway's Nixpacks builder runs `npm install` (triggering the `postinstall` → `prisma generate` hook) then
-   `npm run build` (which also runs `prisma generate` first) automatically.
-4. Add a **release/deploy command** in Railway of `npx prisma migrate deploy` so schema changes apply on every
+3. Railway's Nixpacks builder runs `npm install` then `npm run build` automatically.
+4. Add a **release/deploy command** in Railway of `python backend/manage.py migrate` so schema changes apply on every
    deploy without manual steps (or run it once manually the first time).
 5. Start command is `npm start`, which runs `next start -p $PORT` — Railway sets `$PORT` itself; the app never
    hardcodes `3000` or `localhost` for the production listener.
-6. Seed production data once via `npx prisma db seed` from a Railway shell/one-off job, or skip seeding entirely
-   and create your first `SUPER_ADMIN` by hand (`npx prisma studio` against the production `DATABASE_URL`, or a
-   one-off script) — the seed script is idempotent either way.
+6. Seed bootstrap data with `npm run db:seed`; set `SEED_ADMIN_EMAIL` and `SEED_ADMIN_PASSWORD` to create the first admin.
 
 ## Project structure
 
 ```
-prisma/
-  schema.prisma       Full relational data model
-  migrations/          Applied migration history
-  seed.ts              Seeds demo content (idempotent, upserts by slug/email)
-  seed-data/            Frozen source content the seed script reads (not imported by the app)
+backend/
+  */models.py          Django ORM models
+  */migrations/        Applied Django migration history
+  core/management/commands/seed_data.py  Idempotent bootstrap seed
 src/
   app/
     (site)/            Public site route group — has its own layout with the header/footer/nav

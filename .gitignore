@@ -41,3 +41,7 @@ yarn-error.log*
 next-env.d.ts
 
 .vercel
+
+backend/venv/
+backend/**/__pycache__/
+*.pyc

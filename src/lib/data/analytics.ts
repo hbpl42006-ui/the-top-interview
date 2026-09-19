@@ -1,8 +1,17 @@
 import { fetchApi } from "@/lib/api/client";
 
+export interface AnalyticsSummary {
+  content: { news: { published: number; draft: number }; groundReports: number; interviews: number; podcastEpisodes: number; videos: number };
+  engagement: { newsletterSubscribers: number; pendingComments: number; pendingSubmissions: number; pendingContact: number };
+  contentByState: { state: string; value: number }[];
+  topArticles: { label: string; value: number }[];
+  topGroundReports: { label: string; value: number }[];
+  topEpisodes: { label: string; value: number }[];
+}
+
 export async function getAnalyticsSummary(token?: string) {
   try {
-    const data = await fetchApi<any>('/api/core/dashboard/', { token });
+    const data = await fetchApi<AnalyticsSummary>('/api/core/dashboard/', { token });
     return data || {
       content: {
         news: { total: 0, published: 0, draft: 0 },

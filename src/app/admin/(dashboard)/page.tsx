@@ -40,7 +40,7 @@ export default async function AdminDashboardPage() {
 
         <p className="text-xs text-muted">
           Visitor traffic, device and search-term analytics require a pageview-logging pipeline (see the
-          <code className="mx-1 font-mono">AnalyticsEvent</code> model in <code className="font-mono">prisma/schema.prisma</code>) or a
+          <code className="mx-1 font-mono">AnalyticsEvent</code> model in Django) or a
           provider like GA4 wired up via <code className="mx-1 font-mono">NEXT_PUBLIC_GA_MEASUREMENT_ID</code>. The figures above are
           all real counts from the database.
         </p>

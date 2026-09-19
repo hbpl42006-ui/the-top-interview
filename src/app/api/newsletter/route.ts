@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { requireRole, ADMIN_ROLES } from "@/lib/authz";
 import { proxyToDjango } from "@/lib/api/proxy";
-import { RouteError } from "@/lib/api-response";
+import { handleRoute, RouteError } from "@/lib/api-response";
 import { limit, clientIp } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {

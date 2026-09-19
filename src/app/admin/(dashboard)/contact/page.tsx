@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import { apiResults, fetchApi } from "@/lib/api/client";
 import { ContactList } from "./contact-list";
 
-interface ContactSubmission { id: string; submittedAt: string; [key: string]: unknown }
+interface ContactSubmission { id: string; name: string; email: string; department: string; message: string; status: string; submittedAt: string }
 
 export default async function AdminContactPage() {
   const session = await auth();

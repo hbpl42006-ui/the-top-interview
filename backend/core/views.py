@@ -41,9 +41,10 @@ class SocialLinkViewSet(viewsets.ModelViewSet):
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from news.models import NewsArticle, GroundReport, Reporter, Comment, NewsSubmission
+from news.models import NewsArticle, GroundReport, Reporter, Comment
+from submissions.models import NewsSubmission
 from media_content.models import Interview, PodcastEpisode, Video
-from marketing.models import NewsletterSubscriber, ContactSubmission
+from submissions.models import NewsletterSubscriber, ContactSubmission
 from django.contrib.auth import get_user_model
 from django.db.models import Count, Q
 
@@ -110,4 +111,3 @@ class DashboardSummaryView(APIView):
             "topEpisodes": [{"label": e["title"], "value": e["plays"]} for e in top_episodes],
             "contentByState": content_by_state
         })
-
