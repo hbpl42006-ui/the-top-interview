@@ -93,6 +93,17 @@ export async function Footer() {
             {dict.footer.builtFor} &middot; <Link href="/sitemap.xml" className="hover:text-brand">{dict.footer.sitemap}</Link>
           </p>
         </div>
+        <div className="mt-4 text-center text-xs text-muted">
+          Crafted by{" "}
+          <a
+            href="https://jstechnova.com"
+            target="_blank"
+            rel="noreferrer"
+            className="font-semibold text-foreground transition hover:text-brand"
+          >
+            JS Technova
+          </a>
+        </div>
       </Container>
     </footer>
   );
