@@ -9,16 +9,16 @@ VIDEO_MAX_BYTES = 15 * 1024 * 1024
 IMAGE_TYPES = {"image/jpeg": {".jpg", ".jpeg"}, "image/png": {".png"}, "image/webp": {".webp"}}
 
 
-def upload_image_asset(uploaded_file, folder):
+def upload_media_asset(uploaded_file, folder, expected="any"):
     content_type = (uploaded_file.content_type or "").lower()
     suffix = Path(uploaded_file.name or "").suffix.lower()
-    if content_type in IMAGE_TYPES:
+    if expected != "video" and content_type in IMAGE_TYPES:
         if suffix not in IMAGE_TYPES[content_type]:
             raise ValidationError("The uploaded file extension does not match its image type.")
         if uploaded_file.size > IMAGE_MAX_BYTES:
             raise ValidationError("Images must be 5 MB or smaller.")
         resource_type = "image"
-    elif content_type == "video/mp4" and suffix == ".mp4":
+    elif expected != "image" and content_type == "video/mp4" and suffix == ".mp4":
         if uploaded_file.size > VIDEO_MAX_BYTES:
             raise ValidationError("MP4 videos must be 15 MB or smaller.")
         resource_type = "video"
@@ -38,5 +38,13 @@ def upload_image_asset(uploaded_file, folder):
     return secure_url
 
 
+def upload_image_asset(uploaded_file, folder):
+    return upload_media_asset(uploaded_file, folder, expected="image")
+
+
+def upload_video_asset(uploaded_file, folder):
+    return upload_media_asset(uploaded_file, folder, expected="video")
+
+
 def upload_advertisement_creative(uploaded_file):
-    return upload_image_asset(uploaded_file, "advertisements")
+    return upload_media_asset(uploaded_file, "advertisements")

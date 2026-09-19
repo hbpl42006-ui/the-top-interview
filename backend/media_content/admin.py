@@ -29,6 +29,25 @@ class InterviewAdminForm(forms.ModelForm):
             cleaned_data["thumbnail"] = upload_image_asset(uploaded, "interviews")
         return cleaned_data
 
+
+class VideoAdminForm(forms.ModelForm):
+    thumbnail_upload = forms.FileField(
+        label="Upload Thumbnail (Optional)",
+        required=False,
+        help_text="Optional JPG, JPEG, PNG or WEBP. Maximum size: 5 MB.",
+    )
+
+    class Meta:
+        model = Video
+        fields = "__all__"
+        labels = {"thumbnail": "Existing / External Thumbnail URL", "youtubeId": "YouTube ID"}
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if cleaned_data.get("thumbnail_upload"):
+            cleaned_data["thumbnail"] = upload_image_asset(cleaned_data["thumbnail_upload"], "videos/thumbnails")
+        return cleaned_data
+
 @admin.register(Guest)
 class GuestAdmin(admin.ModelAdmin):
     list_display = ("name", "designation", "category", "createdAt")
@@ -74,8 +93,19 @@ class PodcastEpisodeAdmin(admin.ModelAdmin):
 
 @admin.register(Video)
 class VideoAdmin(admin.ModelAdmin):
+    form = VideoAdminForm
     list_display = ("title", "status", "category", "views", "publishedAt")
     list_filter = ("status", "category")
     search_fields = ("title", "slug", "youtubeId")
     ordering = ("-publishedAt",)
-    readonly_fields = ("id", "createdAt")
+    readonly_fields = ("id", "createdAt", "thumbnail_preview")
+    fields = ("id", "slug", "title", "category", "thumbnail_preview", "thumbnail_upload", "thumbnail", "youtubeId", "duration", "status", "views", "publishedAt", "createdAt")
+
+    @admin.display(description="Thumbnail Preview")
+    def thumbnail_preview(self, obj):
+        if not obj or not obj.thumbnail:
+            return "No thumbnail"
+        parsed = urlparse(obj.thumbnail)
+        if parsed.scheme not in {"http", "https"}:
+            return "Invalid thumbnail URL"
+        return format_html('<img src="{}" alt="Video thumbnail preview" style="max-width:320px;max-height:180px;object-fit:contain" />', obj.thumbnail)
