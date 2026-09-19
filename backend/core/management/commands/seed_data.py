@@ -34,30 +34,42 @@ class Command(BaseCommand):
 
     @transaction.atomic
     def handle(self, *args, **options):
+        category_count = 0
         for name in CATEGORIES:
-            Category.objects.update_or_create(slug=slugify(name), defaults={"name": name})
+            Category.objects.get_or_create(slug=slugify(name), defaults={"name": name})
+            category_count += 1
 
+        state_count = 0
+        city_count = 0
         for slug, (name, cities) in STATES.items():
-            state, _ = State.objects.update_or_create(slug=slug, defaults={"name": name})
+            state, _ = State.objects.get_or_create(slug=slug, defaults={"name": name})
+            state_count += 1
             for city_name in cities:
-                City.objects.update_or_create(
-                    state=state,
-                    name=city_name,
-                    defaults={"slug": slugify(f"{city_name}-{slug}")},
+                city_slug = slugify(f"{city_name}-{slug}")
+                City.objects.get_or_create(
+                    state=state, slug=city_slug,
+                    defaults={"name": city_name},
                 )
+                city_count += 1
 
         email = os.getenv("SEED_ADMIN_EMAIL")
         password = os.getenv("SEED_ADMIN_PASSWORD")
         if email and password:
-            admin, _ = User.objects.get_or_create(email=email, defaults={"name": "Admin Desk"})
-            admin.name = admin.name or "Admin Desk"
-            admin.role = UserRole.SUPER_ADMIN
-            admin.is_staff = True
-            admin.is_superuser = True
-            admin.set_password(password)
-            admin.save()
-            self.stdout.write(f"Ensured SUPER_ADMIN account: {email}")
+            admin, created = User.objects.get_or_create(
+                email=email,
+                defaults={"name": "Admin Desk", "role": UserRole.SUPER_ADMIN, "is_staff": True, "is_superuser": True},
+            )
+            if created:
+                admin.set_password(password)
+                admin.save(update_fields=["password"])
+                admin_status = "created"
+            else:
+                admin_status = "already exists"
+            self.stdout.write(f"SUPER_ADMIN: {admin_status}")
         else:
-            self.stdout.write("Skipped admin account; set SEED_ADMIN_EMAIL and SEED_ADMIN_PASSWORD to create one.")
+            self.stdout.write(self.style.WARNING("SUPER_ADMIN: skipped (seed credentials not configured)."))
 
+        self.stdout.write(f"Categories: {category_count} processed")
+        self.stdout.write(f"States: {state_count} processed")
+        self.stdout.write(f"Cities: {city_count} processed")
         self.stdout.write(self.style.SUCCESS("Bootstrap seed complete. Demo content was not imported."))

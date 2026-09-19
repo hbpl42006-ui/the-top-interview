@@ -63,6 +63,18 @@ silent failure if Cloudinary isn't configured).
 
 ## Database
 
+### Django backend setup (PowerShell)
+
+```powershell
+cd backend
+.\venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+python manage.py check
+python manage.py showmigrations
+python manage.py seed_data
+python manage.py runserver
+```
+
 ```bash
 python backend/manage.py makemigrations       # create Django migrations locally
 python backend/manage.py migrate               # apply migrations
