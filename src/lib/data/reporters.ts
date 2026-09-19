@@ -20,24 +20,14 @@ function mapReporter(r: any): Reporter {
 }
 
 export async function getAllReporters(): Promise<Reporter[]> {
-  try {
-    const data = await fetchApi<any>('/api/news/reporters/');
-    const rows = Array.isArray(data) ? data : data.results || [];
-    return rows.map(mapReporter);
-  } catch (error) {
-    console.error("Failed to fetch reporters:", error);
-    return [];
-  }
+  const data = await fetchApi<any>('/api/news/reporters/');
+  const rows = Array.isArray(data) ? data : data.results || [];
+  return rows.map(mapReporter);
 }
 
 export async function getReporterBySlug(slug: string): Promise<Reporter | undefined> {
-  try {
-    const data = await fetchApi<any>(`/api/news/reporters/?slug=${slug}`);
-    const rows = Array.isArray(data) ? data : data.results || [];
-    if (!rows.length) return undefined;
-    return mapReporter(rows[0]);
-  } catch (error) {
-    console.error(`Failed to fetch reporter by slug ${slug}:`, error);
-    return undefined;
-  }
+  const data = await fetchApi<any>(`/api/news/reporters/?slug=${encodeURIComponent(slug)}`);
+  const rows = Array.isArray(data) ? data : data.results || [];
+  if (!rows.length) return undefined;
+  return mapReporter(rows[0]);
 }

@@ -3,7 +3,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { MapPin, Mail } from "lucide-react";
 import { FaXTwitter, FaInstagram } from "react-icons/fa6";
-import { getReporterBySlug, getAllReporters } from "@/lib/data/reporters";
+import { getReporterBySlug } from "@/lib/data/reporters";
 import { getArticlesByReporter } from "@/lib/data/news";
 import { getGroundReportsByReporter } from "@/lib/data/groundReports";
 import { getInterviewsByReporter } from "@/lib/data/interviews";
@@ -13,10 +13,9 @@ import { GroundReportCard } from "@/components/cards/ground-report-card";
 import { InterviewCard } from "@/components/cards/interview-card";
 import { pageMetadata } from "@/lib/seo";
 
-export async function generateStaticParams() {
-  const reporters = await getAllReporters();
-  return reporters.map((r) => ({ slug: r.slug }));
-}
+// Reporter profiles are runtime-rendered so a temporary Django outage does
+// not make the production build depend on the reporter endpoint.
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;

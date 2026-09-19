@@ -4,6 +4,8 @@ import { getAllCategories } from "@/lib/data/categories";
 import { getAllReporters } from "@/lib/data/reporters";
 import { NewsTable } from "./news-table";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminNewsPage() {
   const [rows, categories, reporters] = await Promise.all([
     getAllNewsForAdmin(),

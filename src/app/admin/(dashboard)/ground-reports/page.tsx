@@ -3,6 +3,8 @@ import { getAllGroundReportsForAdmin } from "@/lib/data/groundReports";
 import { getAllReporters } from "@/lib/data/reporters";
 import { GroundReportsTable } from "./ground-reports-table";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminGroundReportsPage() {
   const [rows, reporters] = await Promise.all([getAllGroundReportsForAdmin(), getAllReporters()]);
   const reports = rows.map((r) => ({

@@ -3,6 +3,8 @@ import { getAllInterviewsForAdmin, interviewCategories } from "@/lib/data/interv
 import { getAllReporters } from "@/lib/data/reporters";
 import { InterviewsTable } from "./interviews-table";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminInterviewsPage() {
   const [rows, reporters] = await Promise.all([getAllInterviewsForAdmin(), getAllReporters()]);
   const interviews = rows.map((r) => ({ ...r, createdAt: r.createdAt.toISOString() }));

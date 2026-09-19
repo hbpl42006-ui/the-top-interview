@@ -44,7 +44,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     fetchApi<SitemapRow[]>("/api/news/special-reports/?status=PUBLISHED"),
     fetchApi<CategoryRow[]>("/api/core/categories/"),
     fetchApi<SitemapRow[]>("/api/core/states/"),
-    fetchApi<SitemapRow[]>("/api/news/reporters/"),
+    fetchApi<SitemapRow[]>("/api/news/reporters/").catch((error): SitemapRow[] => {
+      // A sitemap without reporter entries is preferable to failing the whole
+      // sitemap when the optional Django reporter endpoint is unavailable.
+      if (process.env.NODE_ENV !== "production") console.warn("Failed to fetch reporters for sitemap:", error);
+      return [];
+    }),
   ]);
   const news = apiResults(newsData), groundReports = apiResults(groundReportsData), interviews = apiResults(interviewsData);
   const episodes = apiResults(episodesData), videos = apiResults(videosData), specialReports = apiResults(specialReportsData);

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { MapPin, Clock, RefreshCcw } from "lucide-react";
-import { getArticleBySlug, getAllNews, getRelatedArticles } from "@/lib/data/news";
+import { getArticleBySlug, getRelatedArticles } from "@/lib/data/news";
 import { getReporterBySlug } from "@/lib/data/reporters";
 import { Container } from "@/components/ui/container";
 import { Badge } from "@/components/ui/badge";
@@ -20,10 +20,7 @@ import { AdSlot } from "@/components/ads/ad-slot";
 import { JsonLd, newsArticleSchema, breadcrumbSchema } from "@/lib/seo";
 import { SITE } from "@/lib/constants";
 
-export async function generateStaticParams() {
-  const articles = await getAllNews();
-  return articles.map((a) => ({ slug: a.slug }));
-}
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;

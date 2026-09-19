@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { MapPin, Clock, Mic2 } from "lucide-react";
-import { getGroundReportBySlug, getAllGroundReports, getRelatedGroundReports } from "@/lib/data/groundReports";
+import { getGroundReportBySlug, getRelatedGroundReports } from "@/lib/data/groundReports";
 import { getReporterBySlug } from "@/lib/data/reporters";
 import { Container } from "@/components/ui/container";
 import { Badge } from "@/components/ui/badge";
@@ -19,10 +19,7 @@ import { formatDateTime, formatViews } from "@/lib/utils";
 import { JsonLd, breadcrumbSchema, videoObjectSchema } from "@/lib/seo";
 import { SITE } from "@/lib/constants";
 
-export async function generateStaticParams() {
-  const reports = await getAllGroundReports();
-  return reports.map((r) => ({ slug: r.slug }));
-}
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;

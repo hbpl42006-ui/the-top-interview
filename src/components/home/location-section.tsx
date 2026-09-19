@@ -7,7 +7,9 @@ import { getLocale, getDictionary } from "@/lib/i18n";
 
 export async function LocationSection() {
   const dict = getDictionary(await getLocale());
-  const states = await getAllStates();
+  // Locations are supporting homepage content; an unavailable Django API
+  // should not prevent the rest of the homepage from rendering.
+  const states = await getAllStates({ optional: true });
   return (
     <section className="py-10 sm:py-12">
       <Container>

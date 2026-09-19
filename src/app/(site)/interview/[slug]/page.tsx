@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Clock } from "lucide-react";
-import { getInterviewBySlug, getAllInterviews, getRelatedInterviews } from "@/lib/data/interviews";
+import { getInterviewBySlug, getRelatedInterviews } from "@/lib/data/interviews";
 import { getReporterBySlug } from "@/lib/data/reporters";
 import { Container } from "@/components/ui/container";
 import { Badge } from "@/components/ui/badge";
@@ -16,10 +16,7 @@ import { formatDateTime, formatViews } from "@/lib/utils";
 import { JsonLd, breadcrumbSchema, videoObjectSchema } from "@/lib/seo";
 import { SITE } from "@/lib/constants";
 
-export async function generateStaticParams() {
-  const items = await getAllInterviews();
-  return items.map((i) => ({ slug: i.slug }));
-}
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;

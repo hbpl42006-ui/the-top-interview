@@ -1,26 +1,31 @@
-const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL || (process.env.NODE_ENV === 'development' ? 'http://localhost:8000' : undefined);
 
-interface RequestOptions extends RequestInit {
+export interface RequestOptions extends RequestInit {
   token?: string;
+  /** Milliseconds before the request is aborted. Set null to disable. */
+  timeoutMs?: number | null;
 }
 
 export async function fetchApi<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
-  const { token, headers, ...rest } = options;
+  const { token, headers, timeoutMs = 8000, ...rest } = options;
+  if (!NEXT_PUBLIC_API_URL) throw new Error('NEXT_PUBLIC_API_URL is required outside development.');
 
-  const authHeaders: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
+  const isFormData = typeof FormData !== 'undefined' && rest.body instanceof FormData;
+  const authHeaders: Record<string, string> = isFormData ? {} : { 'Content-Type': 'application/json' };
 
   if (token) {
     authHeaders['Authorization'] = `Bearer ${token}`;
   }
 
+  const timeout = timeoutMs == null ? undefined : AbortSignal.timeout(timeoutMs);
+  const signal = timeout && rest.signal ? AbortSignal.any([rest.signal, timeout]) : (rest.signal ?? timeout);
   const response = await fetch(`${NEXT_PUBLIC_API_URL}${endpoint}`, {
     headers: {
       ...authHeaders,
       ...headers,
     },
     ...rest,
+    signal,
   });
 
   if (!response.ok) {

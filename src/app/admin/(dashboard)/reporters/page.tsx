@@ -2,6 +2,8 @@ import { AdminTopbar } from "@/components/admin/admin-topbar";
 import { getAllReporters } from "@/lib/data/reporters";
 import { ReportersTable } from "./reporters-table";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminReportersPage() {
   const reporters = await getAllReporters();
 
