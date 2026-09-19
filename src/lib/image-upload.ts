@@ -10,6 +10,7 @@ export type ImageUploadContext =
   | "reporters"
   | "team-members"
   | "advertisements";
+export type MediaUploadContext = ImageUploadContext;
 
 export const IMAGE_UPLOAD_FOLDERS: Record<ImageUploadContext, string> = {
   news: "news",
@@ -28,6 +29,14 @@ export function validateImageFile(file: { type: string; size: number }): string 
   }
   if (file.size >= MAX_IMAGE_BYTES) return "Image must be smaller than 5 MB.";
   if (file.size === 0) return "This image is empty. Please choose another file.";
+  return null;
+}
+
+export function validateMediaFile(file: { type: string; size: number }): string | null {
+  if (file.type.startsWith("image/")) return validateImageFile(file);
+  if (file.type !== "video/mp4") return "Choose a JPEG, PNG, WebP, AVIF image or MP4 video.";
+  if (file.size === 0) return "This video is empty. Please choose another file.";
+  if (file.size > 15 * 1024 * 1024) return "Video must be smaller than 15 MB.";
   return null;
 }
 

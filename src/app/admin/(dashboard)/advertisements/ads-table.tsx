@@ -7,6 +7,7 @@ import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { AdminModal } from "@/components/admin/admin-modal";
 import { StatusPill } from "@/components/admin/status-pill";
 import { formatViews } from "@/lib/utils";
+import { MediaUploadField } from "@/components/admin/media-upload-field";
 
 const PLACEMENTS = ["HEADER", "IN_ARTICLE", "SIDEBAR", "HOMEPAGE", "VIDEO_PAGE", "PODCAST_PAGE", "FOOTER"];
 
@@ -27,16 +28,19 @@ export function AdsTable({ ads }: { ads: AdRow[] }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<AdRow | null>(null);
   const [error, setError] = useState("");
+  const [creativeUrl, setCreativeUrl] = useState("");
   const filtered = ads.filter((a) => a.name.toLowerCase().includes(search.toLowerCase()));
 
   function openCreate() {
     setEditing(null);
+    setCreativeUrl("");
     setError("");
     setModalOpen(true);
   }
 
   function openEdit(ad: AdRow) {
     setEditing(ad);
+    setCreativeUrl(ad.creativeUrl ?? "");
     setError("");
     setModalOpen(true);
   }
@@ -70,10 +74,10 @@ export function AdsTable({ ads }: { ads: AdRow[] }) {
       ? {
           name,
           placement,
-          creativeUrl: optionalUrl(formData, "creativeUrl"),
+          creativeUrl: creativeUrl || optionalUrl(formData, "creativeUrl"),
           targetUrl: optionalUrl(formData, "targetUrl"),
         }
-      : { name, placement, isActive: false };
+      : { name, placement, creativeUrl: creativeUrl || optionalUrl(formData, "creativeUrl"), targetUrl: optionalUrl(formData, "targetUrl"), isActive: false };
 
     const res = await fetch(editing ? `/api/ads/${editing.id}` : "/api/ads", {
       method: editing ? "PUT" : "POST",
@@ -160,18 +164,13 @@ export function AdsTable({ ads }: { ads: AdRow[] }) {
               ))}
             </select>
           </div>
-          {editing && (
-            <>
-              <div>
-                <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">Creative Image URL</label>
-                <input name="creativeUrl" type="url" defaultValue={editing.creativeUrl ?? ""} className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
-              </div>
+          <>
+              <MediaUploadField name="creativeUrl" value={creativeUrl} onChange={setCreativeUrl} context="advertisements" label="Creative image or video" />
               <div>
                 <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-muted">Click-through (Target) URL</label>
-                <input name="targetUrl" type="url" defaultValue={editing.targetUrl ?? ""} className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
+                <input name="targetUrl" type="url" defaultValue={editing?.targetUrl ?? ""} className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
               </div>
-            </>
-          )}
+          </>
           <p className="text-xs text-muted">
             Connect an ad network (e.g. Google Ad Manager) and set its script/tag ID via environment variables to
             serve live creative in this slot.
