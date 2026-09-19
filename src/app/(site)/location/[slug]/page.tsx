@@ -5,15 +5,14 @@ import { Container } from "@/components/ui/container";
 import { NewsCard } from "@/components/cards/news-card";
 import { GroundReportCard } from "@/components/cards/ground-report-card";
 import { MapEmbed } from "@/components/article/map-embed";
-import { getStateBySlug, getAllStates } from "@/lib/data/locations";
+import { getStateBySlug } from "@/lib/data/locations";
 import { getArticlesByState } from "@/lib/data/news";
 import { getGroundReportsByState } from "@/lib/data/groundReports";
 import { pageMetadata } from "@/lib/seo";
 
-export async function generateStaticParams() {
-  const states = await getAllStates();
-  return states.map((s) => ({ slug: s.slug }));
-}
+// Location data is served by Django and is not required during the frontend
+// build. Resolve it at request time so builds do not depend on a live API.
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;

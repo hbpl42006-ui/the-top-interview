@@ -4,6 +4,8 @@ import { MapPin } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { getAllStates } from "@/lib/data/locations";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "News By Location",
   description: "Browse ground reports, interviews and local news by state and city across India.",

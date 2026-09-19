@@ -53,6 +53,8 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "i.pravatar.cc" },
       { protocol: "https", hostname: "img.youtube.com" },
       { protocol: "https", hostname: "res.cloudinary.com" },
+      // Instagram image URLs can resolve through this crawler/CDN host.
+      { protocol: "https", hostname: "lookaside.instagram.com" },
     ],
   },
 };
