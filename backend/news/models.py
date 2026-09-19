@@ -96,7 +96,12 @@ class NewsArticle(models.Model):
     city = models.ForeignKey('core.City', on_delete=models.SET_NULL, null=True, blank=True, db_column='cityId', related_name='articles')
     reporter = models.ForeignKey(Reporter, on_delete=models.CASCADE, db_column='reporterId', related_name='articles')
     
-    tags = models.ManyToManyField('core.Tag', related_name='articles', db_table='_ArticleTags')
+    tags = models.ManyToManyField(
+        'core.Tag',
+        through='ArticleTag',
+        through_fields=('article', 'tag'),
+        related_name='articles',
+    )
     
     publishedAt = models.DateTimeField(null=True, blank=True)
     updatedAt = models.DateTimeField(auto_now=True)
@@ -111,6 +116,18 @@ class NewsArticle(models.Model):
 
     def __str__(self):
         return self.headline
+
+
+class ArticleTag(models.Model):
+    """Maps Django's article/tag relation to Prisma's legacy join table."""
+    article = models.ForeignKey(NewsArticle, on_delete=models.CASCADE, db_column='A')
+    tag = models.ForeignKey('core.Tag', on_delete=models.CASCADE, db_column='B')
+    pk = models.CompositePrimaryKey('article_id', 'tag_id')
+
+    class Meta:
+        managed = False
+        db_table = '_ArticleTags'
+        unique_together = (('article', 'tag'),)
 
 class GroundReport(models.Model):
     id = models.CharField(max_length=30, primary_key=True, default=cuid.cuid)
