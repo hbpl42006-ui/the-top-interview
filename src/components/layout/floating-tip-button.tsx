@@ -18,12 +18,14 @@ export function FloatingTipButton() {
   return (
     <>
       <button
+        type="button"
         onClick={() => setOpen(true)}
-        className="fixed right-4 z-40 flex items-center gap-2 rounded-full bg-brand px-4 py-3 text-sm font-bold uppercase tracking-wide text-white shadow-lg shadow-brand/30 transition hover:bg-brand-dark"
+        aria-label={dict.floatingTip.button}
+        className="fixed right-4 z-40 flex min-h-11 items-center gap-2 rounded-full bg-brand px-3 py-3 text-xs font-bold uppercase tracking-wide text-white shadow-lg shadow-brand/30 transition hover:bg-brand-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 sm:px-4 sm:text-sm"
         style={{ bottom: currentEpisode ? "calc(4.5rem + 76px)" : "5.5rem" }}
       >
         <Megaphone size={18} />
-        <span className="hidden sm:inline">{dict.floatingTip.button}</span>
+        <span>{dict.floatingTip.button}</span>
       </button>
 
       {open && (

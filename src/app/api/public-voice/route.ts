@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     });
     // Assuming backend endpoint filters if we pass query params, or we just pass them.
     // The previous Next.js code only fetched PUBLISHED and PUBLIC_VOICE.
-    return proxyToDjango(proxyRequest, '/api/news/submissions/?source=PUBLIC_VOICE&status=PUBLISHED&ordering=-submittedAt');
+    return proxyToDjango(proxyRequest, '/api/submissions/news-tips/?source=PUBLIC_VOICE&status=PUBLISHED&ordering=-submittedAt');
   } catch (error: any) {
     if (error.message === 'Forbidden') return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
     return NextResponse.json({ success: false, error: error.message }, { status: 400 });
@@ -43,27 +43,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Too many submissions from this connection. Please try again later." }, { status: 429 });
     }
 
-    const body = await request.json();
-    
-    // Map data for Django
-    const djangoBody = {
-      source: "PUBLIC_VOICE",
-      name: body.name,
-      contact: body.contact,
-      location: body.location,
-      category: body.category,
-      description: body.description,
-      mediaUrl: body.mediaUrl,
-      status: "PENDING",
-    };
+    const incoming = await request.formData();
+    const djangoBody = new FormData();
+    for (const key of ["name", "contact", "location", "category", "description", "consent"]) {
+      const value = incoming.get(key);
+      if (typeof value === "string") djangoBody.append(key, value);
+    }
+    djangoBody.append("source", "PUBLIC_VOICE");
+    djangoBody.append("status", "PENDING");
+    const media = incoming.get("media");
+    if (media instanceof File) djangoBody.append("media", media, media.name);
 
     const mappedRequest = new NextRequest(request.url, {
-      method: 'POST',
-      headers: request.headers,
-      body: JSON.stringify(djangoBody)
+      method: "POST",
+      body: djangoBody,
     });
 
-    return proxyToDjango(mappedRequest, '/api/news/submissions/');
+    return proxyToDjango(mappedRequest, "/api/submissions/news-tips/");
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 400 });
   }

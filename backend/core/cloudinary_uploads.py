@@ -6,7 +6,7 @@ from django.core.exceptions import ValidationError
 
 IMAGE_MAX_BYTES = 5 * 1024 * 1024
 VIDEO_MAX_BYTES = 15 * 1024 * 1024
-IMAGE_TYPES = {"image/jpeg": {".jpg", ".jpeg"}, "image/png": {".png"}, "image/webp": {".webp"}}
+IMAGE_TYPES = {"image/jpeg": {".jpg", ".jpeg"}, "image/png": {".png"}, "image/webp": {".webp"}, "image/avif": {".avif"}}
 
 
 def upload_media_asset(uploaded_file, folder, expected="any"):

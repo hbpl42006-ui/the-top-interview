@@ -1,0 +1,7 @@
+warning: in the working copy of 'backend/core/cloudinary_uploads.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/submissions/admin.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/submissions/serializers.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/submissions/views.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/app/api/public-voice/route.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/layout/floating-tip-button.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/public-voice/public-voice-form.tsx', LF will be replaced by CRLF the next time Git touches it

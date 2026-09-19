@@ -115,42 +115,6 @@ export function PublicVoiceForm({
     setFile(selected);
   }
 
-  async function uploadMedia(
-    selectedFile: File
-  ): Promise<string> {
-    const formData = new FormData();
-    formData.append("file", selectedFile);
-
-    const response = await fetch(
-      "/api/public-voice/upload",
-      {
-        method: "POST",
-        body: formData,
-      }
-    );
-
-    const data = await readJsonSafely(response);
-
-    if (!response.ok || !data?.success) {
-      throw new Error(
-        errorMessage(data, "Failed to upload media.")
-      );
-    }
-
-    const mediaUrl =
-      data?.data?.secureUrl ||
-      data?.data?.secure_url ||
-      data?.data?.url;
-
-    if (!mediaUrl) {
-      throw new Error(
-        "Upload completed but no media URL was returned."
-      );
-    }
-
-    return mediaUrl;
-  }
-
   async function handleSubmit(
     event: FormEvent<HTMLFormElement>
   ) {
@@ -169,28 +133,18 @@ export function PublicVoiceForm({
     setError("");
 
     try {
-      let mediaUrl: string | null = null;
-
-      if (file) {
-        mediaUrl = await uploadMedia(file);
-      }
-
-      const payload = {
-        name: String(form.get("name") || ""),
-        contact: String(form.get("contact") || ""),
-        location: String(form.get("location") || ""),
-        category: String(form.get("category") || ""),
-        description: String(form.get("description") || ""),
-        mediaUrl,
-        consent,
-      };
+      const payload = new FormData();
+      payload.append("name", String(form.get("name") || ""));
+      payload.append("contact", String(form.get("contact") || ""));
+      payload.append("location", String(form.get("location") || ""));
+      payload.append("category", String(form.get("category") || ""));
+      payload.append("description", String(form.get("description") || ""));
+      payload.append("consent", String(consent));
+      if (file) payload.append("media", file, file.name);
 
       const response = await fetch("/api/public-voice", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
+        body: payload,
       });
 
       const data = await readJsonSafely(response);
