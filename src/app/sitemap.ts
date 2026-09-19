@@ -1,6 +1,6 @@
 ﻿import type { MetadataRoute } from "next";
 import { CATEGORIES } from "@/lib/constants";
-import { prisma } from "@/lib/prisma";
+import { apiResults, fetchApi } from "@/lib/api/client";
 import { categorySlug } from "@/lib/utils";
 
 const BASE_URL = "https://www.thetopinterview.com";
@@ -34,32 +34,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // The public data layer allows PUBLISHED records with a null publishedAt.
   // Also exclude future dates, even if a record was marked PUBLISHED early.
-  const publishedWhere = {
-    status: "PUBLISHED" as const,
-    OR: [{ publishedAt: null }, { publishedAt: { lte: new Date() } }],
-  };
-  const updatedSelect = { slug: true, updatedAt: true } as const;
-  const publishedSelect = { slug: true, publishedAt: true } as const;
-
-  // Existing listing helpers load bodies and relations; sitemap queries only
-  // select URL and timestamp fields through the shared Prisma singleton.
-  // Let database errors propagate rather than caching an incomplete sitemap.
-  const [news, groundReports, interviews, episodes, videos, specialReports, categories, states, reporters] =
-    await Promise.all([
-      prisma.newsArticle.findMany({ where: publishedWhere, select: updatedSelect }),
-      prisma.groundReport.findMany({ where: publishedWhere, select: updatedSelect }),
-      prisma.interview.findMany({ where: publishedWhere, select: updatedSelect }),
-      prisma.podcastEpisode.findMany({ where: publishedWhere, select: publishedSelect }),
-      prisma.video.findMany({ where: publishedWhere, select: publishedSelect }),
-      prisma.specialReport.findMany({ where: publishedWhere, select: publishedSelect }),
-      prisma.category.findMany({ select: { slug: true, name: true } }),
-      prisma.state.findMany({ select: { slug: true } }),
-      prisma.reporter.findMany({ select: { slug: true, updatedAt: true } }),
-    ]);
+  const [newsData, groundReportsData, interviewsData, episodesData, videosData, specialReportsData, categoriesData, statesData, reportersData] = await Promise.all([
+    fetchApi<SitemapRow[]>("/api/news/articles/?status=PUBLISHED"),
+    fetchApi<SitemapRow[]>("/api/news/ground-reports/?status=PUBLISHED"),
+    fetchApi<SitemapRow[]>("/api/media_content/interviews/?status=PUBLISHED"),
+    fetchApi<SitemapRow[]>("/api/media_content/episodes/?status=PUBLISHED"),
+    fetchApi<SitemapRow[]>("/api/media_content/videos/?status=PUBLISHED"),
+    fetchApi<SitemapRow[]>("/api/news/special-reports/?status=PUBLISHED"),
+    fetchApi<CategoryRow[]>("/api/core/categories/"),
+    fetchApi<SitemapRow[]>("/api/core/states/"),
+    fetchApi<SitemapRow[]>("/api/news/reporters/"),
+  ]);
+  const news = apiResults(newsData), groundReports = apiResults(groundReportsData), interviews = apiResults(interviewsData);
+  const episodes = apiResults(episodesData), videos = apiResults(videosData), specialReports = apiResults(specialReportsData);
+  const categories = apiResults(categoriesData), states = apiResults(statesData), reporters = apiResults(reportersData);
 
   function entries(
     path: string,
-    rows: { slug: string; updatedAt?: Date; publishedAt?: Date | null }[],
+    rows: SitemapRow[],
   ): MetadataRoute.Sitemap {
     return rows.filter((row) => row.slug.trim().length > 0).map((row) => {
       const lastModified = row.updatedAt ?? row.publishedAt;
@@ -89,3 +81,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...entries("reporter", reporters),
   ];
 }
+
+interface SitemapRow { slug: string; updatedAt?: string; publishedAt?: string | null }
+interface CategoryRow { slug: string; name: string }

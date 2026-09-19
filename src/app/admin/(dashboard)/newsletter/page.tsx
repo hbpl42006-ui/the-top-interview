@@ -1,12 +1,15 @@
 import { AdminTopbar } from "@/components/admin/admin-topbar";
 import { StatCard } from "@/components/admin/stat-card";
-import { prisma } from "@/lib/prisma";
+import { auth } from "@/auth";
+import { apiResults, fetchApi } from "@/lib/api/client";
 import { formatViews } from "@/lib/utils";
 import { NewsletterTable } from "./newsletter-table";
 
+interface Subscriber { id: string; email: string; subscribedAt: string; isActive: boolean }
+
 export default async function AdminNewsletterPage() {
-  const rows = await prisma.newsletterSubscriber.findMany({ orderBy: { subscribedAt: "desc" } });
-  const subscribers = rows.map((s) => ({ ...s, subscribedAt: s.subscribedAt.toISOString() }));
+  const session = await auth();
+  const subscribers = apiResults(await fetchApi<Subscriber[] | { results?: Subscriber[] }>("/api/submissions/newsletter/?ordering=-subscribedAt", { token: session?.accessToken }));
 
   // eslint-disable-next-line react-hooks/purity -- Server Component computed once per request, not a reactive render
   const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);

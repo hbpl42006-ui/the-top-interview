@@ -1,26 +1,41 @@
-import { NextRequest } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { teamMemberSchema } from "@/lib/validation";
+import { NextRequest, NextResponse } from "next/server";
 import { requireRole, ADMIN_ROLES } from "@/lib/authz";
-import { handleRoute, ok, created } from "@/lib/api-response";
 import { getActiveTeamMembers, getAllTeamMembersForAdmin } from "@/lib/data/teamMembers";
+import { proxyToDjango } from "@/lib/api/proxy";
 
 export async function GET(request: NextRequest) {
-  return handleRoute(async () => {
+  try {
     const isAdmin = request.nextUrl.searchParams.get("all") === "1";
     if (isAdmin) {
       await requireRole(ADMIN_ROLES);
-      return ok(await getAllTeamMembersForAdmin());
+      return NextResponse.json({ success: true, data: await getAllTeamMembersForAdmin() });
     }
-    return ok(await getActiveTeamMembers());
-  });
+    return NextResponse.json({ success: true, data: await getActiveTeamMembers() });
+  } catch (error) {
+    return NextResponse.json({ success: false, error: "Failed to fetch" }, { status: 500 });
+  }
 }
 
 export async function POST(request: NextRequest) {
-  return handleRoute(async () => {
+  try {
     await requireRole(ADMIN_ROLES);
-    const data = teamMemberSchema.parse(await request.json());
-    const member = await prisma.teamMember.create({ data });
-    return created(member);
-  });
+    const body = await request.json();
+    
+    // Map camelCase to snake_case
+    const djangoBody = {
+      ...body,
+      is_active: body.isActive,
+    };
+    
+    const mappedRequest = new NextRequest(request.url, {
+      method: 'POST',
+      headers: request.headers,
+      body: JSON.stringify(djangoBody)
+    });
+
+    return proxyToDjango(mappedRequest, '/api/news/team/');
+  } catch (error: any) {
+    if (error.message === 'Forbidden') return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+  }
 }

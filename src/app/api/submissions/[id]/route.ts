@@ -1,24 +1,38 @@
-import { NextRequest } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { submissionStatusSchema } from "@/lib/validation";
+import { NextRequest, NextResponse } from "next/server";
 import { requireRole, MODERATION_ROLES } from "@/lib/authz";
-import { handleRoute, ok } from "@/lib/api-response";
+import { proxyToDjango } from "@/lib/api/proxy";
 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  return handleRoute(async () => {
+  try {
     await requireRole(MODERATION_ROLES);
     const { id } = await params;
-    const { status } = submissionStatusSchema.parse(await request.json());
-    const submission = await prisma.newsSubmission.update({ where: { id }, data: { status } });
-    return ok(submission);
-  });
+    
+    const mappedRequest = new NextRequest(request.url, {
+      method: 'PATCH', // DRF partial update
+      headers: request.headers,
+      body: await request.text()
+    });
+
+    return proxyToDjango(mappedRequest, `/api/news/submissions/${id}/`);
+  } catch (error: any) {
+    if (error.message === 'Forbidden') return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+  }
 }
 
-export async function DELETE(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  return handleRoute(async () => {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
     await requireRole(MODERATION_ROLES);
     const { id } = await params;
-    await prisma.newsSubmission.delete({ where: { id } });
-    return ok({ id });
-  });
+    
+    const deleteRequest = new NextRequest(request.url, {
+      method: 'DELETE',
+      headers: request.headers
+    });
+    
+    return proxyToDjango(deleteRequest, `/api/news/submissions/${id}/`);
+  } catch (error: any) {
+    if (error.message === 'Forbidden') return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+  }
 }

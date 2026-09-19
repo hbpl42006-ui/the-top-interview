@@ -4,7 +4,7 @@ export const SITE = {
   tagline: "News From The Ground. Voices That Matter.",
   mission:
     "Our mission is to bring authentic stories from the ground to the audience, give people a voice, and present news with accuracy, transparency and responsibility.",
-  url: "https://thetopinterview.example.com",
+  url: "https://www.thetopinterview.com",
   podcastBrand: "The Top Interview Podcasts",
   email: "editorial@thetopinterview.in",
   newsTipEmail: "tips@thetopinterview.in",

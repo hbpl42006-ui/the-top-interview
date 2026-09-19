@@ -1,52 +1,74 @@
-import { NextRequest } from "next/server";
-import { z } from "zod";
-import { prisma } from "@/lib/prisma";
-import { interviewSchema, guestSchema } from "@/lib/validation";
+import { NextRequest, NextResponse } from "next/server";
 import { requireRole, CONTENT_EDITOR_ROLES } from "@/lib/authz";
-import { handleRoute, ok, created } from "@/lib/api-response";
 import { getAllInterviews } from "@/lib/data/interviews";
+import { proxyToDjango } from "@/lib/api/proxy";
+import { auth } from "@/auth";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 export async function GET() {
-  return handleRoute(async () => ok(await getAllInterviews()));
+  try {
+    const data = await getAllInterviews();
+    return NextResponse.json({ success: true, data });
+  } catch (error) {
+    return NextResponse.json({ success: false, error: "Failed to fetch" }, { status: 500 });
+  }
 }
 
-// Accepts either an existing guestId or an inline `guest` object to create-or-reuse.
-const createSchema = interviewSchema
-  .omit({ guestId: true })
-  .extend({ guestId: z.string().optional(), guest: guestSchema.optional() })
-  .refine((v) => v.guestId || v.guest, { message: "Provide guestId or guest details." });
-
 export async function POST(request: NextRequest) {
-  return handleRoute(async () => {
+  try {
     await requireRole(CONTENT_EDITOR_ROLES);
-    const body = createSchema.parse(await request.json());
+    const body = await request.json();
+    const session = await auth();
+    const token = session?.accessToken;
+    
+    const headers = new Headers();
+    headers.set('Content-Type', 'application/json');
+    if (token) headers.set('Authorization', `Bearer ${token}`);
 
-    let guestId = body.guestId;
-    if (!guestId && body.guest) {
-      const guest = await prisma.guest.upsert({
-        where: { slug: body.guest.slug },
-        update: body.guest,
-        create: body.guest,
+    let guest_id = body.guestId;
+
+    if (!guest_id && body.guest) {
+      // Create guest in Django
+      const guestRes = await fetch(`${API_URL}/api/media_content/guests/`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(body.guest),
       });
-      guestId = guest.id;
+      const guestData = await guestRes.json();
+      if (!guestRes.ok) {
+        // If guest already exists with this slug, we can try to fetch it
+        if (guestRes.status === 400 && guestData.slug) {
+          const findRes = await fetch(`${API_URL}/api/media_content/guests/?slug=${body.guest.slug}`, { headers });
+          const findData = await findRes.json();
+          if (findData.results && findData.results.length > 0) {
+            guest_id = findData.results[0].id;
+          } else {
+            return NextResponse.json({ success: false, error: "Guest creation failed" }, { status: 400 });
+          }
+        } else {
+          return NextResponse.json({ success: false, error: "Guest creation failed", details: guestData }, { status: 400 });
+        }
+      } else {
+        guest_id = guestData.id;
+      }
     }
 
-    const interview = await prisma.interview.create({
-      data: {
-        slug: body.slug,
-        topic: body.topic,
-        excerpt: body.excerpt,
-        body: body.body,
-        thumbnail: body.thumbnail,
-        videoUrl: body.videoUrl,
-        duration: body.duration,
-        category: body.category,
-        status: body.status,
-        reporterId: body.reporterId,
-        publishedAt: body.publishedAt,
-        guestId: guestId!,
-      },
+    const djangoBody = {
+      ...body,
+      guest_id,
+      reporter_id: body.reporterId,
+    };
+
+    const mappedRequest = new NextRequest(request.url, {
+      method: 'POST',
+      headers: request.headers,
+      body: JSON.stringify(djangoBody)
     });
-    return created(interview);
-  });
+
+    return proxyToDjango(mappedRequest, '/api/media_content/interviews/');
+  } catch (error: any) {
+    if (error.message === 'Forbidden') return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+  }
 }

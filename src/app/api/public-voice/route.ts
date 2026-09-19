@@ -1,12 +1,5 @@
-import { NextRequest } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { publicVoiceSchema } from "@/lib/validation";
-import {
-  handleRoute,
-  created,
-  ok,
-  RouteError,
-} from "@/lib/api-response";
+import { NextRequest, NextResponse } from "next/server";
+import { proxyToDjango } from "@/lib/api/proxy";
 import { limit, clientIp } from "@/lib/rate-limit";
 
 /**
@@ -16,29 +9,19 @@ import { limit, clientIp } from "@/lib/rate-limit";
  * IMPORTANT:
  * Never expose `contact` publicly.
  */
-export async function GET() {
-  return handleRoute(async () => {
-    const submissions = await prisma.newsSubmission.findMany({
-      where: {
-        source: "PUBLIC_VOICE",
-        status: "PUBLISHED",
-      },
-      select: {
-        id: true,
-        name: true,
-        location: true,
-        category: true,
-        description: true,
-        mediaUrl: true,
-        submittedAt: true,
-      },
-      orderBy: {
-        submittedAt: "desc",
-      },
+export async function GET(request: NextRequest) {
+  try {
+    const proxyRequest = new NextRequest(request.url, {
+      method: 'GET',
+      headers: request.headers
     });
-
-    return ok(submissions);
-  });
+    // Assuming backend endpoint filters if we pass query params, or we just pass them.
+    // The previous Next.js code only fetched PUBLISHED and PUBLIC_VOICE.
+    return proxyToDjango(proxyRequest, '/api/news/submissions/?source=PUBLIC_VOICE&status=PUBLISHED&ordering=-submittedAt');
+  } catch (error: any) {
+    if (error.message === 'Forbidden') return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+  }
 }
 
 /**
@@ -47,7 +30,7 @@ export async function GET() {
  * and must be approved by the editorial team.
  */
 export async function POST(request: NextRequest) {
-  return handleRoute(async () => {
+  try {
     const { success } = limit(
       `public-voice:${clientIp(request)}`,
       {
@@ -57,29 +40,31 @@ export async function POST(request: NextRequest) {
     );
 
     if (!success) {
-      throw new RouteError(
-        "Too many submissions from this connection. Please try again later.",
-        429
-      );
+      return NextResponse.json({ success: false, error: "Too many submissions from this connection. Please try again later." }, { status: 429 });
     }
 
-    const data = publicVoiceSchema.parse(await request.json());
+    const body = await request.json();
+    
+    // Map data for Django
+    const djangoBody = {
+      source: "PUBLIC_VOICE",
+      name: body.name,
+      contact: body.contact,
+      location: body.location,
+      category: body.category,
+      description: body.description,
+      mediaUrl: body.mediaUrl,
+      status: "PENDING",
+    };
 
-    const submission = await prisma.newsSubmission.create({
-      data: {
-        source: "PUBLIC_VOICE",
-        name: data.name,
-        contact: data.contact,
-        location: data.location,
-        category: data.category,
-        description: data.description,
-        mediaUrl: data.mediaUrl,
-        status: "PENDING",
-      },
+    const mappedRequest = new NextRequest(request.url, {
+      method: 'POST',
+      headers: request.headers,
+      body: JSON.stringify(djangoBody)
     });
 
-    return created({
-      id: submission.id,
-    });
-  });
+    return proxyToDjango(mappedRequest, '/api/news/submissions/');
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+  }
 }

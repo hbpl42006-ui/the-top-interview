@@ -1,25 +1,25 @@
-import { NextRequest } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { stateSchema } from "@/lib/validation";
+import { NextRequest, NextResponse } from "next/server";
 import { requireRole, ADMIN_ROLES } from "@/lib/authz";
-import { handleRoute, ok, created } from "@/lib/api-response";
 import { getAllStates } from "@/lib/data/locations";
+import { proxyToDjango } from "@/lib/api/proxy";
 
 export async function GET() {
-  return handleRoute(async () => ok(await getAllStates()));
+  try {
+    const data = await getAllStates();
+    return NextResponse.json({ success: true, data });
+  } catch (error) {
+    return NextResponse.json({ success: false, error: "Failed to fetch" }, { status: 500 });
+  }
 }
 
 export async function POST(request: NextRequest) {
-  return handleRoute(async () => {
+  try {
     await requireRole(ADMIN_ROLES);
-    const { cities, ...data } = stateSchema.parse(await request.json());
-    const state = await prisma.state.create({
-      data: {
-        ...data,
-        cities: { create: cities.map((name) => ({ name, slug: `${data.slug}-${name.toLowerCase().replace(/\s+/g, "-")}` })) },
-      },
-      include: { cities: true },
-    });
-    return created(state);
-  });
+    // In Django, creating a state with cities is supported via DRF writable nested serializers, or we handle it in DRF.
+    // We just forward the JSON.
+    return proxyToDjango(request, '/api/core/states/');
+  } catch (error: any) {
+    if (error.message === 'Forbidden') return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+  }
 }

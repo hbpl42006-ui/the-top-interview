@@ -1,89 +1,121 @@
-import { Prisma } from "@prisma/client";
-import { prisma } from "@/lib/prisma";
+import { fetchApi } from "@/lib/api/client";
 import { Interview } from "@/lib/types";
 
-const include = {
-  guest: { select: { name: true, designation: true, photo: true } },
-  reporter: { select: { slug: true } },
-} satisfies Prisma.InterviewInclude;
-
-type Row = Prisma.InterviewGetPayload<{ include: typeof include }>;
-
-function mapInterview(i: Row): Interview {
+function mapInterview(i: any): Interview {
   return {
     id: i.id,
     slug: i.slug,
-    guest: i.guest.name,
-    guestDesignation: i.guest.designation,
-    guestPhoto: i.guest.photo,
+    guest: i.guest?.name || "",
+    guestDesignation: i.guest?.designation || "",
+    guestPhoto: i.guest?.photo || "",
     category: i.category,
     topic: i.topic,
     thumbnail: i.thumbnail,
     videoUrl: i.videoUrl ?? undefined,
     duration: i.duration,
     excerpt: i.excerpt,
-    body: i.body.split(/\n{2,}/).filter(Boolean),
-    publishedAt: (i.publishedAt ?? i.createdAt).toISOString(),
-    reporter: i.reporter.slug,
+    body: (i.body || "").split(/\n{2,}/).filter(Boolean),
+    publishedAt: i.publishedAt || i.createdAt,
+    reporter: i.reporter?.slug || "",
     views: i.views,
-    tags: [],
+    tags: (i.tags || []).map((t: any) => t.name),
   };
 }
 
-const publishedWhere = { status: "PUBLISHED" as const };
-
 export async function getAllInterviews(): Promise<Interview[]> {
-  const rows = await prisma.interview.findMany({ where: publishedWhere, include, orderBy: { publishedAt: "desc" } });
-  return rows.map(mapInterview);
+  try {
+    const data = await fetchApi<any>('/api/media_content/interviews/');
+    const rows = Array.isArray(data) ? data : data.results || [];
+    return rows.map(mapInterview);
+  } catch (e) {
+    return [];
+  }
 }
 
-export async function getAllInterviewsForAdmin() {
-  return prisma.interview.findMany({
-    include: { guest: { select: { name: true } }, reporter: { select: { name: true } } },
-    orderBy: { createdAt: "desc" },
-  });
+export interface AdminInterviewRow {
+  id: string;
+  slug: string;
+  topic: string;
+  status: string;
+  views: number;
+  category: string;
+  guest: { name: string };
+  reporter: { name: string };
+  createdAt: Date;
+  updatedAt: Date;
+  excerpt: string;
+  body: string;
+  thumbnail: string;
+  reporterId: string;
+}
+
+export async function getAllInterviewsForAdmin(token?: string): Promise<AdminInterviewRow[]> {
+  try {
+    const data = await fetchApi<any>('/api/media_content/interviews/', { token });
+    const rows = Array.isArray(data) ? data : data.results || [];
+    return rows.map((r: any) => ({
+      ...r,
+      guest: r.guest || { name: "" },
+      reporter: r.reporter || { name: "" },
+      createdAt: new Date(r.createdAt),
+      updatedAt: new Date(r.updatedAt),
+      excerpt: r.excerpt || "",
+      body: r.body || "",
+      thumbnail: r.thumbnail || "",
+      reporterId: r.reporter_id || "",
+    }));
+  } catch (e) {
+    return [];
+  }
 }
 
 export async function getInterviewBySlug(slug: string): Promise<Interview | undefined> {
-  const row = await prisma.interview.findUnique({ where: { slug }, include });
-  return row ? mapInterview(row) : undefined;
+  try {
+    const data = await fetchApi<any>(`/api/media_content/interviews/?slug=${slug}`);
+    const rows = Array.isArray(data) ? data : data.results || [];
+    if (!rows.length) return undefined;
+    return mapInterview(rows[0]);
+  } catch (e) {
+    return undefined;
+  }
 }
 
 export async function getInterviewsByReporter(reporterSlug: string): Promise<Interview[]> {
-  const rows = await prisma.interview.findMany({
-    where: { ...publishedWhere, reporter: { slug: reporterSlug } },
-    include,
-    orderBy: { publishedAt: "desc" },
-  });
-  return rows.map(mapInterview);
+  try {
+    const data = await fetchApi<any>(`/api/media_content/interviews/?reporter__slug=${encodeURIComponent(reporterSlug)}`);
+    const rows = Array.isArray(data) ? data : data.results || [];
+    return rows.map(mapInterview);
+  } catch (e) {
+    return [];
+  }
 }
 
 export async function getLatestInterviews(limit = 6): Promise<Interview[]> {
-  const rows = await prisma.interview.findMany({
-    where: publishedWhere,
-    include,
-    orderBy: { publishedAt: "desc" },
-    take: limit,
-  });
-  return rows.map(mapInterview);
+  try {
+    const data = await fetchApi<any>('/api/media_content/interviews/');
+    const rows = Array.isArray(data) ? data : data.results || [];
+    return rows.slice(0, limit).map(mapInterview);
+  } catch (e) {
+    return [];
+  }
 }
 
 export async function getRelatedInterviews(current: Interview, limit = 3): Promise<Interview[]> {
-  const sameCategory = await prisma.interview.findMany({
-    where: { ...publishedWhere, slug: { not: current.slug }, category: current.category },
-    include,
-    orderBy: { publishedAt: "desc" },
-    take: limit,
-  });
-  if (sameCategory.length > 0) return sameCategory.map(mapInterview);
+  try {
+    const data = await fetchApi<any>(`/api/media_content/interviews/?category=${encodeURIComponent(current.category)}`);
+    let rows = Array.isArray(data) ? data : data.results || [];
+    rows = rows.filter((r: any) => r.slug !== current.slug);
+    
+    if (rows.length > 0) return rows.slice(0, limit).map(mapInterview);
 
-  const fallback = await prisma.interview.findMany({
-    where: { ...publishedWhere, slug: { not: current.slug } },
-    include,
-    orderBy: { publishedAt: "desc" },
-    take: limit,
-  });
-  return fallback.map(mapInterview);
+    const fallbackData = await fetchApi<any>('/api/media_content/interviews/');
+    let fallbackRows = Array.isArray(fallbackData) ? fallbackData : fallbackData.results || [];
+    fallbackRows = fallbackRows.filter((r: any) => r.slug !== current.slug);
+    
+    return fallbackRows.slice(0, limit).map(mapInterview);
+  } catch (e) {
+    return [];
+  }
 }
 
 export const interviewCategories = [

@@ -1,31 +1,34 @@
-import { NextRequest } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { publicVoiceSchema } from "@/lib/validation";
-import { handleRoute, created, RouteError } from "@/lib/api-response";
+import { NextRequest, NextResponse } from "next/server";
+import { proxyToDjango } from "@/lib/api/proxy";
 import { limit, clientIp } from "@/lib/rate-limit";
 
-// Same underlying model as /api/public-voice (both are NewsSubmission rows
-// reviewed in the same admin moderation queue) — kept as a distinct route
-// because the floating "Send Us News" tip button and the full Public Voice
-// page are presented as separate entry points in the product.
 export async function POST(request: NextRequest) {
-  return handleRoute(async () => {
+  try {
     const { success } = limit(`tips:${clientIp(request)}`, { max: 5, windowMs: 60 * 60 * 1000 });
-    if (!success) throw new RouteError("Too many submissions from this connection. Please try again later.", 429);
+    if (!success) return NextResponse.json({ success: false, error: "Too many submissions from this connection. Please try again later." }, { status: 429 });
 
-    const data = publicVoiceSchema.parse(await request.json());
-    const submission = await prisma.newsSubmission.create({
-      data: {
-        source: "NEWS_TIP",
-        name: data.name,
-        contact: data.contact,
-        location: data.location,
-        category: data.category,
-        description: data.description,
-        mediaUrl: data.mediaUrl,
-        status: "PENDING",
-      },
+    const body = await request.json();
+    
+    // Map data for Django
+    const djangoBody = {
+      source: "NEWS_TIP",
+      name: body.name,
+      contact: body.contact,
+      location: body.location,
+      category: body.category,
+      description: body.description,
+      mediaUrl: body.mediaUrl,
+      status: "PENDING",
+    };
+
+    const mappedRequest = new NextRequest(request.url, {
+      method: 'POST',
+      headers: request.headers,
+      body: JSON.stringify(djangoBody)
     });
-    return created({ id: submission.id });
-  });
+
+    return proxyToDjango(mappedRequest, '/api/news/submissions/');
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+  }
 }

@@ -1,64 +1,47 @@
-import { NextRequest } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { newsArticleUpdateSchema } from "@/lib/validation";
+import { NextRequest, NextResponse } from "next/server";
 import { requireRole, CONTENT_EDITOR_ROLES } from "@/lib/authz";
-import { handleRoute, ok } from "@/lib/api-response";
+import { proxyToDjango } from "@/lib/api/proxy";
+import { auth } from "@/auth";
 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  return handleRoute(async () => {
+  try {
     await requireRole(CONTENT_EDITOR_ROLES);
     const { id } = await params;
-    const { tagNames, ...data } = newsArticleUpdateSchema.parse(await request.json());
-    try {
-      const article = await prisma.newsArticle.update({
-        where: { id },
-        data: {
-          ...(data.slug !== undefined ? { slug: data.slug } : {}),
-          ...(data.headline !== undefined ? { headline: data.headline } : {}),
-          ...(data.subheadline !== undefined ? { subheadline: data.subheadline } : {}),
-          ...(data.excerpt !== undefined ? { excerpt: data.excerpt } : {}),
-          ...(data.body !== undefined ? { body: data.body } : {}),
-          ...(data.image !== undefined ? { image: data.image } : {}),
-          ...(data.videoUrl !== undefined ? { videoUrl: data.videoUrl } : {}),
-          ...(data.status !== undefined ? { status: data.status } : {}),
-          ...(data.contentLabel !== undefined ? { contentLabel: data.contentLabel } : {}),
-          ...(data.factCheck !== undefined ? { factCheck: data.factCheck } : {}),
-          ...(data.isBreaking !== undefined ? { isBreaking: data.isBreaking } : {}),
-          ...(data.isFeatured !== undefined ? { isFeatured: data.isFeatured } : {}),
-          ...(data.readMinutes !== undefined ? { readMinutes: data.readMinutes } : {}),
-          ...(data.categoryId !== undefined ? { categoryId: data.categoryId } : {}),
-          ...(data.cityId !== undefined ? { cityId: data.cityId } : {}),
-          ...(data.reporterId !== undefined ? { reporterId: data.reporterId } : {}),
-          ...(data.publishedAt !== undefined ? { publishedAt: data.publishedAt } : {}),
-          ...(tagNames
-            ? {
-                tags: {
-                  set: [],
-                  connectOrCreate: tagNames.map((name) => ({
-                    where: { slug: name.toLowerCase().replace(/\s+/g, "-") },
-                    create: { slug: name.toLowerCase().replace(/\s+/g, "-") , name },
-                  })),
-                },
-              }
-            : {}),
-        },
-      });
-      return ok(article);
-    } catch (error) {
-      console.error("[news:update] failed", {
-        name: error instanceof Error ? error.name : "Unknown",
-        message: error instanceof Error ? error.message : String(error),
-      });
-      throw error;
-    }
-  });
+    const body = await request.json();
+    
+    // Map camelCase to snake_case for Django
+    const djangoBody: any = { ...body };
+    if (body.categoryId !== undefined) djangoBody.category_id = body.categoryId;
+    if (body.reporterId !== undefined) djangoBody.reporter_id = body.reporterId;
+    if (body.cityId !== undefined) djangoBody.city_id = body.cityId;
+    if (body.readMinutes !== undefined) djangoBody.readMinutes = body.readMinutes;
+
+    const mappedRequest = new NextRequest(request.url, {
+      method: 'PATCH', // DRF partial update is PATCH, Next.js UI sends PUT
+      headers: request.headers,
+      body: JSON.stringify(djangoBody)
+    });
+
+    return proxyToDjango(mappedRequest, `/api/news/articles/${id}/`);
+  } catch (error: any) {
+    if (error.message === 'Forbidden') return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+  }
 }
 
-export async function DELETE(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  return handleRoute(async () => {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
     await requireRole(CONTENT_EDITOR_ROLES);
     const { id } = await params;
-    await prisma.newsArticle.delete({ where: { id } });
-    return ok({ id });
-  });
+    
+    const deleteRequest = new NextRequest(request.url, {
+      method: 'DELETE',
+      headers: request.headers
+    });
+    
+    return proxyToDjango(deleteRequest, `/api/news/articles/${id}/`);
+  } catch (error: any) {
+    if (error.message === 'Forbidden') return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+  }
 }

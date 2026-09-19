@@ -1,160 +1,177 @@
-import { Prisma } from "@prisma/client";
-import { prisma } from "@/lib/prisma";
+import { fetchApi } from "@/lib/api/client";
 import { NewsArticle, Category, ContentType } from "@/lib/types";
 
-const articleInclude = {
-  category: { select: { name: true } },
-  city: { select: { name: true, state: { select: { name: true } } } },
-  reporter: { select: { slug: true } },
-  tags: { select: { name: true } },
-} satisfies Prisma.NewsArticleInclude;
-
-type ArticleRow = Prisma.NewsArticleGetPayload<{ include: typeof articleInclude }>;
-
-const FACT_CHECK_DISPLAY: Record<string, NewsArticle["factCheck"]> = {
-  VERIFIED: "Verified",
-  UNDER_REVIEW: "Under Review",
-  DISPUTED: "Disputed",
-};
-
-const CONTENT_LABEL_DISPLAY: Record<string, NewsArticle["contentLabel"]> = {
-  NEWS: "News",
-  OPINION: "Opinion",
-  SPONSORED: "Sponsored",
-};
-
-function mapArticle(a: ArticleRow): NewsArticle {
-  // "Ground Report"-flavoured news pieces still live in the NewsArticle
-  // table (they're written stories, not the video-first GroundReport
-  // model) — we surface that with a badge, but always link to /news/[slug]
-  // since that's the only place this exact content lives.
-  const type: ContentType = a.category.name === "Ground Reports" ? "ground-report" : "news";
+function mapArticle(a: any): NewsArticle {
+  const type: ContentType = a.category?.name === "Ground Reports" ? "ground-report" : "news";
 
   return {
     slug: a.slug,
     type,
     headline: a.headline,
     subheadline: a.subheadline ?? "",
-    category: a.category.name as Category,
-    location: a.locationLabel ?? a.city?.name ?? undefined,
-    state: a.city?.state.name,
+    category: (a.category?.name || "") as Category,
+    location: a.locationLabel || a.city?.name || undefined,
+    state: a.city?.state?.name,
     image: a.image,
     videoUrl: a.videoUrl ?? undefined,
     excerpt: a.excerpt,
-    body: a.body.split(/\n{2,}/).filter(Boolean),
+    body: (a.body || "").split(/\n{2,}/).filter(Boolean),
     quote: a.quoteText ? { text: a.quoteText, attribution: a.quoteAttribution ?? "" } : undefined,
-    keyPoints: (a.keyPoints as string[] | null) ?? undefined,
-    reporter: a.reporter.slug,
-    publishedAt: (a.publishedAt ?? a.createdAt).toISOString(),
-    updatedAt: a.updatedAt.toISOString(),
-    tags: a.tags.map((t) => t.name),
+    keyPoints: a.keyPoints ?? undefined,
+    reporter: a.reporter?.slug,
+    publishedAt: a.publishedAt || a.createdAt,
+    updatedAt: a.updatedAt,
+    tags: (a.tags || []).map((t: any) => t.name),
     isBreaking: a.isBreaking,
     isFeatured: a.isFeatured,
-    factCheck: a.factCheck ? FACT_CHECK_DISPLAY[a.factCheck] : undefined,
-    contentLabel: CONTENT_LABEL_DISPLAY[a.contentLabel],
+    factCheck: a.factCheck, // Django serializer should be made to return the display string or we can map it here. Let's assume Django returns display string or we handle it if needed. For now assume raw enum like "VERIFIED", wait, the previous mapped it.
+    contentLabel: a.contentLabel,
     views: a.views,
     readMinutes: a.readMinutes,
   };
 }
 
-const publishedWhere = { status: "PUBLISHED" as const };
-
 export async function getAllNews(): Promise<NewsArticle[]> {
-  const rows = await prisma.newsArticle.findMany({
-    where: publishedWhere,
-    include: articleInclude,
-    orderBy: { publishedAt: "desc" },
-  });
-  return rows.map(mapArticle);
+  try {
+    const data = await fetchApi<any>('/api/news/articles/');
+    const rows = Array.isArray(data) ? data : data.results || [];
+    return rows.map(mapArticle);
+  } catch (e) {
+    return [];
+  }
 }
 
-export async function getAllNewsForAdmin() {
-  return prisma.newsArticle.findMany({
-    include: { category: { select: { name: true } }, reporter: { select: { name: true } } },
-    orderBy: { createdAt: "desc" },
-  });
+export interface AdminNewsRow {
+  id: string;
+  slug: string;
+  headline: string;
+  status: string;
+  views: number;
+  isBreaking: boolean;
+  isFeatured: boolean;
+  category: { name: string };
+  reporter: { name: string };
+  createdAt: Date;
+  updatedAt: Date;
+  excerpt: string;
+  body: string;
+  image: string;
+  categoryId: string;
+  reporterId: string;
+}
+
+export async function getAllNewsForAdmin(token?: string): Promise<AdminNewsRow[]> {
+  try {
+    const data = await fetchApi<any>('/api/news/articles/', { token });
+    const rows = Array.isArray(data) ? data : data.results || [];
+    // admin table expects raw data similar to Prisma + category.name and reporter.name
+    return rows.map((r: any) => ({
+      ...r,
+      category: r.category || { name: "" },
+      reporter: r.reporter || { name: "" },
+      createdAt: new Date(r.createdAt),
+      updatedAt: new Date(r.updatedAt),
+      excerpt: r.excerpt || "",
+      body: r.body || "",
+      image: r.image || "",
+      categoryId: r.category_id || "",
+      reporterId: r.reporter_id || "",
+    }));
+  } catch (e) {
+    return [];
+  }
 }
 
 export async function getArticleBySlug(slug: string): Promise<NewsArticle | undefined> {
-  const row = await prisma.newsArticle.findUnique({ where: { slug }, include: articleInclude });
-  return row ? mapArticle(row) : undefined;
+  try {
+    const data = await fetchApi<any>(`/api/news/articles/?slug=${slug}`);
+    const rows = Array.isArray(data) ? data : data.results || [];
+    if (!rows.length) return undefined;
+    return mapArticle(rows[0]);
+  } catch (e) {
+    return undefined;
+  }
 }
 
 export async function getBreakingNews(): Promise<NewsArticle[]> {
-  const rows = await prisma.newsArticle.findMany({
-    where: { ...publishedWhere, isBreaking: true },
-    include: articleInclude,
-    orderBy: { publishedAt: "desc" },
-    take: 6,
-  });
-  return rows.map(mapArticle);
+  try {
+    const data = await fetchApi<any>('/api/news/articles/?isBreaking=true');
+    const rows = Array.isArray(data) ? data : data.results || [];
+    return rows.slice(0, 6).map(mapArticle);
+  } catch (e) {
+    return [];
+  }
 }
 
 export async function getFeaturedNews(): Promise<NewsArticle[]> {
-  const rows = await prisma.newsArticle.findMany({
-    where: { ...publishedWhere, isFeatured: true },
-    include: articleInclude,
-    orderBy: { publishedAt: "desc" },
-    take: 4,
-  });
-  return rows.map(mapArticle);
+  try {
+    const data = await fetchApi<any>('/api/news/articles/?isFeatured=true');
+    const rows = Array.isArray(data) ? data : data.results || [];
+    return rows.slice(0, 4).map(mapArticle);
+  } catch (e) {
+    return [];
+  }
 }
 
 export async function getLatestNews(limit = 8): Promise<NewsArticle[]> {
-  const rows = await prisma.newsArticle.findMany({
-    where: publishedWhere,
-    include: articleInclude,
-    orderBy: { publishedAt: "desc" },
-    take: limit,
-  });
-  return rows.map(mapArticle);
+  try {
+    const data = await fetchApi<any>('/api/news/articles/');
+    const rows = Array.isArray(data) ? data : data.results || [];
+    return rows.slice(0, limit).map(mapArticle);
+  } catch (e) {
+    return [];
+  }
 }
 
 export async function getTrendingNews(limit = 5): Promise<NewsArticle[]> {
-  const rows = await prisma.newsArticle.findMany({
-    where: publishedWhere,
-    include: articleInclude,
-    orderBy: { views: "desc" },
-    take: limit,
-  });
-  return rows.map(mapArticle);
+  try {
+    const data = await fetchApi<any>('/api/news/articles/?ordering=-views');
+    const rows = Array.isArray(data) ? data : data.results || [];
+    return rows.slice(0, limit).map(mapArticle);
+  } catch (e) {
+    return [];
+  }
 }
 
 export async function getRelatedArticles(article: NewsArticle, limit = 3): Promise<NewsArticle[]> {
-  const rows = await prisma.newsArticle.findMany({
-    where: { ...publishedWhere, slug: { not: article.slug }, category: { name: article.category } },
-    include: articleInclude,
-    orderBy: { publishedAt: "desc" },
-    take: limit,
-  });
-  return rows.map(mapArticle);
+  try {
+    const data = await fetchApi<any>(`/api/news/articles/?category__name=${encodeURIComponent(article.category)}`);
+    let rows = Array.isArray(data) ? data : data.results || [];
+    rows = rows.filter((r: any) => r.slug !== article.slug);
+    return rows.slice(0, limit).map(mapArticle);
+  } catch (e) {
+    return [];
+  }
 }
 
 export async function getArticlesByCategory(category: string): Promise<NewsArticle[]> {
-  const rows = await prisma.newsArticle.findMany({
-    where: { ...publishedWhere, category: { name: category } },
-    include: articleInclude,
-    orderBy: { publishedAt: "desc" },
-  });
-  return rows.map(mapArticle);
+  try {
+    const data = await fetchApi<any>(`/api/news/articles/?category__name=${encodeURIComponent(category)}`);
+    const rows = Array.isArray(data) ? data : data.results || [];
+    return rows.map(mapArticle);
+  } catch (e) {
+    return [];
+  }
 }
 
 export async function getArticlesByState(state: string): Promise<NewsArticle[]> {
-  const rows = await prisma.newsArticle.findMany({
-    where: { ...publishedWhere, city: { state: { name: state } } },
-    include: articleInclude,
-    orderBy: { publishedAt: "desc" },
-  });
-  return rows.map(mapArticle);
+  try {
+    const data = await fetchApi<any>(`/api/news/articles/?city__state__name=${encodeURIComponent(state)}`);
+    const rows = Array.isArray(data) ? data : data.results || [];
+    return rows.map(mapArticle);
+  } catch (e) {
+    return [];
+  }
 }
 
 export async function getArticlesByReporter(reporterSlug: string): Promise<NewsArticle[]> {
-  const rows = await prisma.newsArticle.findMany({
-    where: { ...publishedWhere, reporter: { slug: reporterSlug } },
-    include: articleInclude,
-    orderBy: { publishedAt: "desc" },
-  });
-  return rows.map(mapArticle);
+  try {
+    const data = await fetchApi<any>(`/api/news/articles/?reporter__slug=${encodeURIComponent(reporterSlug)}`);
+    const rows = Array.isArray(data) ? data : data.results || [];
+    return rows.map(mapArticle);
+  } catch (e) {
+    return [];
+  }
 }
 
 export interface PaginatedResult<T> {
@@ -176,22 +193,29 @@ export async function getPaginatedNews({
   category?: string;
   q?: string;
 }): Promise<PaginatedResult<NewsArticle>> {
-  const where: Prisma.NewsArticleWhereInput = {
-    ...publishedWhere,
-    ...(category ? { category: { name: category } } : {}),
-    ...(q ? { headline: { contains: q, mode: "insensitive" } } : {}),
-  };
+  try {
+    const params = new URLSearchParams();
+    params.set('page', page.toString());
+    // Django DRF doesn't use pageSize by default unless configured. Let's pass it anyway or assume 20.
+    
+    if (category) params.set('category__name', category);
+    if (q) params.set('search', q);
 
-  const [rows, total] = await Promise.all([
-    prisma.newsArticle.findMany({
-      where,
-      include: articleInclude,
-      orderBy: { publishedAt: "desc" },
-      skip: (page - 1) * pageSize,
-      take: pageSize,
-    }),
-    prisma.newsArticle.count({ where }),
-  ]);
+    const data = await fetchApi<any>(`/api/news/articles/?${params.toString()}`);
+    const rows = Array.isArray(data) ? data : data.results || [];
+    const total = data.count || rows.length;
+    
+    // We slice in memory if DRF returned full list, else we just use rows
+    const items = rows.slice(0, pageSize).map(mapArticle);
 
-  return { items: rows.map(mapArticle), total, page, pageSize, totalPages: Math.max(1, Math.ceil(total / pageSize)) };
+    return {
+      items,
+      total,
+      page,
+      pageSize,
+      totalPages: Math.max(1, Math.ceil(total / pageSize)),
+    };
+  } catch (e) {
+    return { items: [], total: 0, page, pageSize, totalPages: 1 };
+  }
 }

@@ -1,18 +1,16 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
-import { prisma } from "@/lib/prisma";
+import { apiResults, fetchApi } from "@/lib/api/client";
 import { AdminTopbar } from "@/components/admin/admin-topbar";
 import { UsersTable } from "./users-table";
+
+interface UserRow { id: string; name: string; email: string; role: string; createdAt: string }
 
 export default async function AdminUsersPage() {
   const session = await auth();
   if (session?.user.role !== "SUPER_ADMIN") redirect("/admin");
 
-  const rows = await prisma.user.findMany({
-    select: { id: true, name: true, email: true, role: true, createdAt: true },
-    orderBy: { createdAt: "asc" },
-  });
-  const users = rows.map((u) => ({ ...u, createdAt: u.createdAt.toISOString() }));
+  const users = apiResults(await fetchApi<UserRow[] | { results?: UserRow[] }>("/api/accounts/users/?ordering=createdAt", { token: session?.accessToken }));
 
   return (
     <>

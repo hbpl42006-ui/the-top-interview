@@ -1,4 +1,4 @@
-import type { UserRole } from "@prisma/client";
+import type { UserRole } from "@/types/domain";
 import type { DefaultSession } from "next-auth";
 
 // Augmenting the modules where these interfaces are actually declared
@@ -10,11 +10,14 @@ declare module "@auth/core/types" {
       id: string;
       role: UserRole;
     } & DefaultSession["user"];
+    accessToken?: string;
   }
 
   interface User {
     id: string;
     role: UserRole;
+    accessToken?: string;
+    refreshToken?: string;
   }
 }
 
@@ -22,5 +25,7 @@ declare module "@auth/core/jwt" {
   interface JWT {
     id: string;
     role: UserRole;
+    accessToken?: string;
+    refreshToken?: string;
   }
 }

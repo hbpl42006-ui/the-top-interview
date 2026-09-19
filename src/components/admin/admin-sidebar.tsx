@@ -22,7 +22,7 @@ import {
   Mail,
   ExternalLink,
 } from "lucide-react";
-import type { UserRole } from "@prisma/client";
+import type { UserRole } from "@/types/domain";
 import { Logo } from "@/components/layout/logo";
 import { cn } from "@/lib/utils";
 

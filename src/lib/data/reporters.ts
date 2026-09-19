@@ -1,47 +1,43 @@
-import { prisma } from "@/lib/prisma";
+import { fetchApi } from "@/lib/api/client";
 import { Reporter } from "@/lib/types";
 
-function mapReporter(r: {
-  id: string;
-  slug: string;
-  name: string;
-  designation: string;
-  bio: string;
-  photo: string;
-  twitter: string | null;
-  instagram: string | null;
-  email: string | null;
-  location: { name: string; state: { name: string } } | null;
-  _count: { articles: number; groundReports: number; interviews: number };
-}): Reporter {
+function mapReporter(r: any): Reporter {
   return {
     id: r.id,
     slug: r.slug,
     name: r.name,
     designation: r.designation,
-    location: r.location ? `${r.location.name}, ${r.location.state.name}` : "",
+    location: r.location ? `${r.location.name}, ${r.location.state?.name || ''}` : "",
     bio: r.bio,
     photo: r.photo,
     twitter: r.twitter ?? undefined,
     instagram: r.instagram ?? undefined,
     email: r.email ?? undefined,
-    articleCount: r._count.articles,
-    groundReportCount: r._count.groundReports,
-    interviewCount: r._count.interviews,
+    articleCount: r.articleCount || 0,
+    groundReportCount: r.groundReportCount || 0,
+    interviewCount: r.interviewCount || 0,
   };
 }
 
-const include = {
-  location: { select: { name: true, state: { select: { name: true } } } },
-  _count: { select: { articles: true, groundReports: true, interviews: true } },
-} as const;
-
 export async function getAllReporters(): Promise<Reporter[]> {
-  const rows = await prisma.reporter.findMany({ include, orderBy: { name: "asc" } });
-  return rows.map(mapReporter);
+  try {
+    const data = await fetchApi<any>('/api/news/reporters/');
+    const rows = Array.isArray(data) ? data : data.results || [];
+    return rows.map(mapReporter);
+  } catch (error) {
+    console.error("Failed to fetch reporters:", error);
+    return [];
+  }
 }
 
 export async function getReporterBySlug(slug: string): Promise<Reporter | undefined> {
-  const row = await prisma.reporter.findUnique({ where: { slug }, include });
-  return row ? mapReporter(row) : undefined;
+  try {
+    const data = await fetchApi<any>(`/api/news/reporters/?slug=${slug}`);
+    const rows = Array.isArray(data) ? data : data.results || [];
+    if (!rows.length) return undefined;
+    return mapReporter(rows[0]);
+  } catch (error) {
+    console.error(`Failed to fetch reporter by slug ${slug}:`, error);
+    return undefined;
+  }
 }

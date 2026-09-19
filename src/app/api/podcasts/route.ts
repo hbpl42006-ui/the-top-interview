@@ -1,26 +1,62 @@
-import { NextRequest } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { podcastEpisodeSchema } from "@/lib/validation";
+import { NextRequest, NextResponse } from "next/server";
 import { requireRole, PODCAST_ROLES } from "@/lib/authz";
-import { handleRoute, ok, created } from "@/lib/api-response";
 import { getAllEpisodes } from "@/lib/data/podcasts";
+import { proxyToDjango } from "@/lib/api/proxy";
+import { auth } from "@/auth";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 export async function GET() {
-  return handleRoute(async () => ok(await getAllEpisodes()));
+  try {
+    const data = await getAllEpisodes();
+    return NextResponse.json({ success: true, data });
+  } catch (error) {
+    return NextResponse.json({ success: false, error: "Failed to fetch" }, { status: 500 });
+  }
 }
 
 export async function POST(request: NextRequest) {
-  return handleRoute(async () => {
+  try {
     await requireRole(PODCAST_ROLES);
-    const data = podcastEpisodeSchema.parse(await request.json());
+    const body = await request.json();
+    const session = await auth();
+    const token = session?.accessToken;
+    
+    const headers = new Headers();
+    headers.set('Content-Type', 'application/json');
+    if (token) headers.set('Authorization', `Bearer ${token}`);
 
-    const podcast = await prisma.podcast.upsert({
-      where: { slug: "the-top-interview-podcasts" },
-      update: {},
-      create: { slug: "the-top-interview-podcasts", name: "The Top Interview Podcasts" },
+    // Get or create the default podcast
+    let podcast_id = null;
+    const podRes = await fetch(`${API_URL}/api/media_content/podcasts/?slug=the-top-interview-podcasts`, { headers });
+    const podData = await podRes.json();
+    
+    if (podData.results && podData.results.length > 0) {
+      podcast_id = podData.results[0].id;
+    } else {
+      const createPodRes = await fetch(`${API_URL}/api/media_content/podcasts/`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ slug: "the-top-interview-podcasts", name: "The Top Interview Podcasts" }),
+      });
+      const createPodData = await createPodRes.json();
+      podcast_id = createPodData.id;
+    }
+
+    const djangoBody = {
+      ...body,
+      podcast: podcast_id,
+    };
+
+    const mappedRequest = new NextRequest(request.url, {
+      method: 'POST',
+      headers: request.headers,
+      body: JSON.stringify(djangoBody)
     });
 
-    const episode = await prisma.podcastEpisode.create({ data: { ...data, podcastId: podcast.id } });
-    return created(episode);
-  });
+    return proxyToDjango(mappedRequest, '/api/media_content/episodes/');
+  } catch (error: any) {
+    if (error.message === 'Forbidden') return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+  }
 }

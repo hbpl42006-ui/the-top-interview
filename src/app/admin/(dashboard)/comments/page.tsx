@@ -1,13 +1,13 @@
 import { AdminTopbar } from "@/components/admin/admin-topbar";
-import { prisma } from "@/lib/prisma";
+import { auth } from "@/auth";
+import { apiResults, fetchApi } from "@/lib/api/client";
 import { CommentsList } from "./comments-list";
 
+interface CommentRow { id: string; name: string; message: string; status: string; createdAt: string; article: { slug: string; headline: string } }
+
 export default async function AdminCommentsPage() {
-  const rows = await prisma.comment.findMany({
-    include: { article: { select: { slug: true, headline: true } } },
-    orderBy: { createdAt: "desc" },
-  });
-  const comments = rows.map((c) => ({ ...c, createdAt: c.createdAt.toISOString() }));
+  const session = await auth();
+  const comments = apiResults(await fetchApi<CommentRow[] | { results?: CommentRow[] }>("/api/news/comments/?ordering=-createdAt", { token: session?.accessToken }));
 
   return (
     <>

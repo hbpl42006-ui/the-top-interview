@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
-import type { UserRole } from "@prisma/client";
+import type { UserRole } from "@/types/domain";
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
 
 export function AdminMobileMenu({ role }: { role?: UserRole }) {

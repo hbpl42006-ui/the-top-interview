@@ -1,10 +1,13 @@
 import { AdminTopbar } from "@/components/admin/admin-topbar";
-import { prisma } from "@/lib/prisma";
+import { auth } from "@/auth";
+import { apiResults, fetchApi } from "@/lib/api/client";
 import { SubmissionsList } from "./submissions-list";
 
+interface NewsSubmission { id: string; submittedAt: string; [key: string]: unknown }
+
 export default async function AdminSubmissionsPage() {
-  const rows = await prisma.newsSubmission.findMany({ orderBy: { submittedAt: "desc" } });
-  const submissions = rows.map((s) => ({ ...s, submittedAt: s.submittedAt.toISOString() }));
+  const session = await auth();
+  const submissions = apiResults(await fetchApi<NewsSubmission[] | { results?: NewsSubmission[] }>("/api/submissions/news-tips/?ordering=-submittedAt", { token: session?.accessToken }));
 
   return (
     <>
