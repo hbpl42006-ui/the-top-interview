@@ -79,15 +79,17 @@ export default async function ContactPage() {
               </p>
               <p className="flex items-center gap-2 text-sm">
                 <Mail size={16} className="text-brand" />
-                <a href={`mailto:${SITE.email}`} className="hover:text-brand">
+                <a href={`mailto:${SITE.email}`} className="break-all hover:text-brand">
                   {SITE.email}
                 </a>
               </p>
               <p className="flex items-center gap-2 text-sm">
-                <Phone size={16} className="text-brand" /> {SITE.phone}
+                <Phone size={16} className="text-brand" />
+                <a href="tel:+918052937423" className="hover:text-brand">{SITE.phone}</a>
               </p>
               <p className="flex items-center gap-2 text-sm">
-                <MessageCircle size={16} className="text-brand" /> WhatsApp: {SITE.whatsapp}
+                <MessageCircle size={16} className="text-brand" /> WhatsApp:
+                <a href="https://wa.me/918052937423" target="_blank" rel="noopener noreferrer" className="hover:text-brand">{SITE.whatsapp}</a>
               </p>
               <p className="flex items-center gap-2 text-sm">
                 <Clock size={16} className="text-brand" /> {SITE.workingHours}
@@ -112,11 +114,11 @@ export default async function ContactPage() {
 
       <Container className="mt-14">
         <SectionHeading eyebrow={d.findUsEyebrow} title={d.findUsHeading} />
-        <MapEmbed query={SITE.address} />
+        <MapEmbed query={SITE.mapQuery} />
         <a
-          href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(SITE.address)}`}
+          href={SITE.mapUrl}
           target="_blank"
-          rel="noreferrer"
+          rel="noopener noreferrer"
           className="inline-flex items-center gap-1.5 text-sm font-bold text-brand hover:underline"
         >
           {d.getDirections} <ExternalLink size={14} />

@@ -6,11 +6,13 @@ export const SITE = {
     "Our mission is to bring authentic stories from the ground to the audience, give people a voice, and present news with accuracy, transparency and responsibility.",
   url: "https://www.thetopinterview.com",
   podcastBrand: "The Top Interview Podcasts",
-  email: "editorial@thetopinterview.in",
+  email: "4792sanjay@gmail.com",
   newsTipEmail: "tips@thetopinterview.in",
-  phone: "+91 98765 43210",
-  whatsapp: "+91 98765 43210",
-  address: "4th Floor, Press Enclave, Vidhan Sabha Marg, Lucknow, Uttar Pradesh 226001, India",
+  phone: "+91 8052937423",
+  whatsapp: "+91 8052937423",
+  address: "Tamkuhi Raj (New Tehsil Gate, Near TVS Agency), District Kushinagar, Uttar Pradesh, India",
+  mapUrl: "https://www.google.com/maps/place/26%C2%B041'21.5%22N+84%C2%B010'07.0%22E/@26.689297,84.1660231,17z/data=!3m1!4b1!4m4!3m3!8m2!3d26.689297!4d84.168598?hl=en&entry=ttu&g_ep=EgoyMDI2MDkxNi4wIKXMDSoASAFQAw%3D%3D",
+  mapQuery: "26.689297,84.168598",
   workingHours: "Monday – Saturday, 10:00 AM – 7:00 PM IST",
 };
 
