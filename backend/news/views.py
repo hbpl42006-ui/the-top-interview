@@ -1,4 +1,5 @@
 from rest_framework import viewsets, permissions
+from rest_framework.response import Response
 from .models import Reporter, NewsArticle, GroundReport, SpecialReport, TeamMember, Comment
 from .serializers import (
     ReporterSerializer, NewsArticleSerializer, GroundReportSerializer, 
@@ -16,7 +17,6 @@ class NewsArticleViewSet(viewsets.ModelViewSet):
     queryset = (
         NewsArticle.objects
         .select_related('category', 'city', 'city__state', 'reporter')
-        .prefetch_related('tags')
         .order_by('-publishedAt')
     )
     serializer_class = NewsArticleSerializer
@@ -26,9 +26,35 @@ class NewsArticleViewSet(viewsets.ModelViewSet):
 
     def get_serializer_class(self):
         if self.action == 'list':
+            if self.request.query_params.get('includeTags') == 'false':
+                from .serializers import NewsArticleCardSerializer
+                return NewsArticleCardSerializer
             from .serializers import NewsArticleListSerializer
             return NewsArticleListSerializer
         return NewsArticleSerializer
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        if self.action == 'list':
+            queryset = queryset.defer('body', 'quoteText', 'quoteAttribution', 'keyPoints')
+            if self.request.query_params.get('includeTags') != 'false':
+                queryset = queryset.prefetch_related('tags')
+            return queryset
+        return queryset.prefetch_related('tags')
+
+    def list(self, request, *args, **kwargs):
+        raw_limit = request.query_params.get('limit')
+        if raw_limit is None:
+            return super().list(request, *args, **kwargs)
+
+        try:
+            limit = min(max(int(raw_limit), 1), 50)
+        except (TypeError, ValueError):
+            limit = 20
+
+        queryset = self.filter_queryset(self.get_queryset())[:limit]
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
 class GroundReportViewSet(viewsets.ModelViewSet):
     queryset = GroundReport.objects.select_related(

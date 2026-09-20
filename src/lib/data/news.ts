@@ -106,7 +106,7 @@ export async function getBreakingNews(): Promise<NewsArticle[]> {
 
 export async function getFeaturedNews(): Promise<NewsArticle[]> {
   try {
-    const data = await fetchApi<any>('/api/news/articles/?isFeatured=true');
+    const data = await fetchApi<any>('/api/news/articles/?isFeatured=true&limit=4&includeTags=false');
     const rows = Array.isArray(data) ? data : data.results || [];
     return rows.slice(0, 4).map(mapArticle);
   } catch (e) {
@@ -116,7 +116,7 @@ export async function getFeaturedNews(): Promise<NewsArticle[]> {
 
 export async function getLatestNews(limit = 8): Promise<NewsArticle[]> {
   try {
-    const data = await fetchApi<any>('/api/news/articles/');
+    const data = await fetchApi<any>(`/api/news/articles/?limit=${limit}&includeTags=false`);
     const rows = Array.isArray(data) ? data : data.results || [];
     return rows.slice(0, limit).map(mapArticle);
   } catch (e) {
@@ -126,7 +126,7 @@ export async function getLatestNews(limit = 8): Promise<NewsArticle[]> {
 
 export async function getTrendingNews(limit = 5): Promise<NewsArticle[]> {
   try {
-    const data = await fetchApi<any>('/api/news/articles/?ordering=-views');
+    const data = await fetchApi<any>(`/api/news/articles/?ordering=-views&limit=${limit}&includeTags=false`);
     const rows = Array.isArray(data) ? data : data.results || [];
     return rows.slice(0, limit).map(mapArticle);
   } catch (e) {

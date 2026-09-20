@@ -62,6 +62,12 @@ class NewsArticleListSerializer(NewsArticleSerializer):
             'city', 'reporter',
         )
 
+
+class NewsArticleCardSerializer(NewsArticleListSerializer):
+    class Meta:
+        model = NewsArticle
+        fields = tuple(field for field in NewsArticleListSerializer.Meta.fields if field != 'tags')
+
 class GroundReportSerializer(serializers.ModelSerializer):
     class Meta:
         model = GroundReport
