@@ -64,16 +64,26 @@ async function readJsonSafely(response: Response) {
   }
 }
 
-function errorMessage(data: any, fallback: string) {
-  if (typeof data?.error === "string") {
-    return data.error;
+function errorMessage(data: unknown, fallback: string) {
+  if (!data || typeof data !== "object") return fallback;
+
+  const payload = data as Record<string, unknown>;
+  const error = payload.error;
+
+  if (typeof error === "string") return error;
+  if (error && typeof error === "object" && "message" in error) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === "string") return message;
   }
 
-  if (data?.error?.message) {
-    return data.error.message;
-  }
+  const messages = Object.entries(payload).flatMap(([field, value]) => {
+    const values = Array.isArray(value) ? value : [value];
+    return values
+      .filter((item): item is string => typeof item === "string")
+      .map((item) => (field === "non_field_errors" ? item : `${field}: ${item}`));
+  });
 
-  return fallback;
+  return messages.length ? messages.join(" ") : fallback;
 }
 
 export function PublicVoiceForm({
@@ -142,14 +152,19 @@ export function PublicVoiceForm({
       payload.append("consent", String(consent));
       if (file) payload.append("media", file, file.name);
 
-      const response = await fetch("/api/public-voice", {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "");
+      if (!apiUrl) {
+        throw new Error("The submission service is not configured.");
+      }
+
+      const response = await fetch(`${apiUrl}/api/submissions/news-tips/`, {
         method: "POST",
         body: payload,
       });
 
       const data = await readJsonSafely(response);
 
-      if (!response.ok || !data?.success) {
+      if (!response.ok) {
         throw new Error(
           errorMessage(data, d.genericError)
         );
