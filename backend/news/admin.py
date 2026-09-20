@@ -10,7 +10,7 @@ from .models import Comment, GroundReport, NewsArticle, Reporter, SpecialReport,
 
 class GroundReportAdminForm(forms.ModelForm):
     image_upload = forms.FileField(label="Upload Image", required=False, help_text="JPG, JPEG, PNG or WEBP. Maximum size: 5 MB.")
-    video_upload = forms.FileField(label="Upload Video", required=False, help_text="MP4 only. Maximum size: 15 MB.")
+    video_upload = forms.FileField(label="Upload Video", required=False, help_text="MP4 only. Maximum size: 20 MB.")
 
     class Meta:
         model = GroundReport

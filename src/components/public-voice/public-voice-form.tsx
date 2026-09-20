@@ -25,7 +25,7 @@ const ALLOWED_TYPES = new Set([
 ]);
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
-const MAX_VIDEO_BYTES = 15 * 1024 * 1024;
+const MAX_VIDEO_BYTES = 20 * 1024 * 1024;
 
 function validateMedia(file: File): string | null {
   if (!ALLOWED_TYPES.has(file.type)) {
@@ -39,7 +39,7 @@ function validateMedia(file: File): string | null {
   const isVideo = file.type === "video/mp4";
 
   if (isVideo && file.size > MAX_VIDEO_BYTES) {
-    return "Video must be 15 MB or smaller.";
+    return "Video must be 20 MB or smaller.";
   }
 
   if (!isVideo && file.size > MAX_IMAGE_BYTES) {
@@ -291,7 +291,7 @@ export function PublicVoiceForm({
         )}
 
         <p className="mt-1 text-xs text-muted">
-          JPEG, PNG, WebP or AVIF up to 5 MB. MP4 video up to 15 MB.
+          JPEG, PNG, WebP or AVIF up to 5 MB. MP4 video up to 20 MB.
         </p>
       </div>
 

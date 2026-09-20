@@ -27,7 +27,7 @@ if (cloudinaryConfigured) {
   });
 }
 
-const MAX_UPLOAD_BYTES = 15 * 1024 * 1024; // 15MB
+const MAX_UPLOAD_BYTES = 20 * 1024 * 1024; // 20MB for video; images use MAX_IMAGE_BYTES
 const ALLOWED_TYPES = new Set<string>([...IMAGE_TYPES, "video/mp4", "audio/mpeg"]);
 
 /**
@@ -57,7 +57,7 @@ export async function uploadToCloudinary(
     if (!hasImageSignature(header, file.type)) throw new RouteError("The file contents do not match its image type.", 415);
   }
   if (file.size > MAX_UPLOAD_BYTES) {
-    throw new RouteError("File is too large (max 15MB).", 413);
+    throw new RouteError("Video must be 20 MB or smaller.", 413);
   }
   if (!ALLOWED_TYPES.has(file.type)) {
     throw new RouteError("Unsupported file type.", 415);

@@ -55,7 +55,7 @@ export function MediaUploadField({ name, value, onChange, context, label = "Crea
     <input ref={input} type="file" accept="image/jpeg,image/png,image/webp,image/avif,video/mp4" className="hidden" onChange={(event) => { const file = event.currentTarget.files?.[0]; event.currentTarget.value = ""; if (file) void selectFile(file); }} />
     <label htmlFor={id} className="block text-xs font-bold uppercase tracking-wide text-muted">Existing/external media URL</label>
     <input id={id} name={name} type="url" value={value} onChange={(event) => { setError(""); onChange(event.target.value); }} placeholder="https://..." className="w-full rounded-sm border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-brand" />
-    <p className="text-xs text-muted">Images up to 5 MB; MP4 videos up to 15 MB.</p>
+    <p className="text-xs text-muted">Images up to 5 MB; MP4 videos up to 20 MB.</p>
     {error && <p role="alert" className="text-sm text-brand">{error}</p>}
   </fieldset>;
 }

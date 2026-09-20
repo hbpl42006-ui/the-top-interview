@@ -12,7 +12,7 @@ class AdvertisementAdminForm(forms.ModelForm):
     creative_upload = forms.FileField(
         label="Upload Creative Image / Video",
         required=False,
-        help_text="JPG, JPEG, PNG or WEBP up to 5 MB; MP4 up to 15 MB.",
+        help_text="JPG, JPEG, PNG or WEBP up to 5 MB; MP4 up to 20 MB.",
     )
 
     class Meta:

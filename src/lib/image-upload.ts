@@ -36,7 +36,7 @@ export function validateMediaFile(file: { type: string; size: number }): string 
   if (file.type.startsWith("image/")) return validateImageFile(file);
   if (file.type !== "video/mp4") return "Choose a JPEG, PNG, WebP, AVIF image or MP4 video.";
   if (file.size === 0) return "This video is empty. Please choose another file.";
-  if (file.size > 15 * 1024 * 1024) return "Video must be smaller than 15 MB.";
+  if (file.size > 20 * 1024 * 1024) return "Video must be 20 MB or smaller.";
   return null;
 }
 

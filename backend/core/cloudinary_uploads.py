@@ -5,7 +5,7 @@ import cloudinary.uploader
 from django.core.exceptions import ValidationError
 
 IMAGE_MAX_BYTES = 5 * 1024 * 1024
-VIDEO_MAX_BYTES = 15 * 1024 * 1024
+VIDEO_MAX_BYTES = 20 * 1024 * 1024
 IMAGE_TYPES = {"image/jpeg": {".jpg", ".jpeg"}, "image/png": {".png"}, "image/webp": {".webp"}, "image/avif": {".avif"}}
 
 
@@ -20,7 +20,7 @@ def upload_media_asset(uploaded_file, folder, expected="any"):
         resource_type = "image"
     elif expected != "image" and content_type == "video/mp4" and suffix == ".mp4":
         if uploaded_file.size > VIDEO_MAX_BYTES:
-            raise ValidationError("MP4 videos must be 15 MB or smaller.")
+            raise ValidationError("Video must be 20 MB or smaller.")
         resource_type = "video"
     else:
         raise ValidationError("Upload a JPG, JPEG, PNG, WEBP image or MP4 video.")
