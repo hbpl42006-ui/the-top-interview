@@ -1,5 +1,6 @@
 import { fetchApi } from "@/lib/api/client";
 import { Interview } from "@/lib/types";
+import { safeImageUrl } from "@/lib/media-url";
 
 function mapInterview(i: any): Interview {
   return {
@@ -7,10 +8,10 @@ function mapInterview(i: any): Interview {
     slug: i.slug,
     guest: i.guest?.name || "",
     guestDesignation: i.guest?.designation || "",
-    guestPhoto: i.guest?.photo || "",
+    guestPhoto: safeImageUrl(i.guest?.photo),
     category: i.category,
     topic: i.topic,
-    thumbnail: i.thumbnail,
+    thumbnail: safeImageUrl(i.thumbnail),
     videoUrl: i.videoUrl ?? undefined,
     duration: i.duration,
     excerpt: i.excerpt,

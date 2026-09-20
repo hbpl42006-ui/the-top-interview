@@ -1,5 +1,6 @@
 import { fetchApi } from "@/lib/api/client";
 import { GroundReport } from "@/lib/types";
+import { safeImageUrl } from "@/lib/media-url";
 
 function mapGroundReport(g: any): GroundReport {
   return {
@@ -11,7 +12,7 @@ function mapGroundReport(g: any): GroundReport {
     reporter: g.reporter?.slug || "",
     reporterName: g.reporter?.name || "",
     category: "Ground Reports",
-    image: g.image,
+    image: safeImageUrl(g.image),
     videoUrl: g.videoUrl ?? undefined,
     excerpt: g.excerpt,
     body: (g.body || "").split(/\n{2,}/).filter(Boolean),

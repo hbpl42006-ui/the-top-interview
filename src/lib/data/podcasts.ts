@@ -1,5 +1,6 @@
 import { fetchApi } from "@/lib/api/client";
 import { PodcastEpisode } from "@/lib/types";
+import { safeImageUrl } from "@/lib/media-url";
 
 function mapEpisode(e: any): PodcastEpisode {
   return {
@@ -7,7 +8,7 @@ function mapEpisode(e: any): PodcastEpisode {
     episodeNumber: e.episodeNumber,
     title: e.title,
     guest: e.guestName || "",
-    cover: e.cover,
+    cover: safeImageUrl(e.cover),
     description: e.description,
     duration: e.duration,
     publishedAt: e.publishedAt || e.createdAt,

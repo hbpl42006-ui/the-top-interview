@@ -4,10 +4,12 @@ export interface RequestOptions extends RequestInit {
   token?: string;
   /** Milliseconds before the request is aborted. Set null to disable. */
   timeoutMs?: number | null;
+  /** Server-side public GET revalidation interval in seconds. */
+  revalidateSeconds?: number | null;
 }
 
 export async function fetchApi<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
-  const { token, headers, timeoutMs = 8000, ...rest } = options;
+  const { token, headers, timeoutMs = 8000, revalidateSeconds = 60, ...rest } = options;
   if (!NEXT_PUBLIC_API_URL) throw new Error('NEXT_PUBLIC_API_URL is required outside development.');
 
   const isFormData = typeof FormData !== 'undefined' && rest.body instanceof FormData;
@@ -19,12 +21,15 @@ export async function fetchApi<T>(endpoint: string, options: RequestOptions = {}
 
   const timeout = timeoutMs == null ? undefined : AbortSignal.timeout(timeoutMs);
   const signal = timeout && rest.signal ? AbortSignal.any([rest.signal, timeout]) : (rest.signal ?? timeout);
+  const isGet = !rest.method || rest.method.toUpperCase() === "GET";
+  const shouldRevalidate = isGet && !token && !rest.cache && typeof window === "undefined" && revalidateSeconds != null;
   const response = await fetch(`${NEXT_PUBLIC_API_URL}${endpoint}`, {
     headers: {
       ...authHeaders,
       ...headers,
     },
     ...rest,
+    ...(shouldRevalidate ? { next: { revalidate: revalidateSeconds } } : {}),
     signal,
   });
 

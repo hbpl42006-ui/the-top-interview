@@ -3,6 +3,29 @@
 import { useEffect, useState } from "react";
 import type { SearchResult } from "@/lib/search";
 
+const searchCache = new Map<string, SearchResult[]>();
+const searchRequests = new Map<string, Promise<SearchResult[]>>();
+
+async function fetchSearchResults(query: string): Promise<SearchResult[]> {
+  const cached = searchCache.get(query);
+  if (cached) return cached;
+
+  const existing = searchRequests.get(query);
+  if (existing) return existing;
+
+  const request = fetch(`/api/search?q=${encodeURIComponent(query)}`)
+    .then(async (res) => {
+      const json = await res.json();
+      const results = json.success && Array.isArray(json.data) ? json.data : [];
+      searchCache.set(query, results);
+      return results;
+    })
+    .finally(() => searchRequests.delete(query));
+
+  searchRequests.set(query, request);
+  return request;
+}
+
 export function useSearchResults(query: string) {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -16,9 +39,8 @@ export function useSearchResults(query: string) {
     setLoading(true);
     const timer = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/search?q=${encodeURIComponent(trimmed)}`);
-        const json = await res.json();
-        if (!cancelled && json.success) setResults(json.data);
+        const nextResults = await fetchSearchResults(trimmed);
+        if (!cancelled) setResults(nextResults);
       } catch {
         if (!cancelled) setResults([]);
       } finally {

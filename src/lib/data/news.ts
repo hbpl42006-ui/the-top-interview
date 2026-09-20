@@ -1,5 +1,6 @@
 import { fetchApi } from "@/lib/api/client";
 import { NewsArticle, Category, ContentType } from "@/lib/types";
+import { safeImageUrl } from "@/lib/media-url";
 
 function mapArticle(a: any): NewsArticle {
   const type: ContentType = a.category?.name === "Ground Reports" ? "ground-report" : "news";
@@ -12,7 +13,7 @@ function mapArticle(a: any): NewsArticle {
     category: (a.category?.name || "") as Category,
     location: a.locationLabel || a.city?.name || undefined,
     state: a.city?.state?.name,
-    image: a.image,
+    image: safeImageUrl(a.image),
     videoUrl: a.videoUrl ?? undefined,
     excerpt: a.excerpt,
     body: (a.body || "").split(/\n{2,}/).filter(Boolean),

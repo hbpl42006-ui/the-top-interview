@@ -1,12 +1,13 @@
 import { fetchApi } from "@/lib/api/client";
 import { Video, ContentType } from "@/lib/types";
+import { safeImageUrl } from "@/lib/media-url";
 
 function mapVideo(v: any): Video {
   return {
     slug: v.slug,
     title: v.title,
     category: v.category as ContentType,
-    thumbnail: v.thumbnail,
+    thumbnail: safeImageUrl(v.thumbnail),
     youtubeId: v.youtubeId,
     duration: v.duration,
     views: v.views,

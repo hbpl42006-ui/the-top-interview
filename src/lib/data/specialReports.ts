@@ -1,12 +1,13 @@
 import { fetchApi } from "@/lib/api/client";
 import { SpecialReport } from "@/lib/types";
+import { safeImageUrl } from "@/lib/media-url";
 
 function mapSpecialReport(s: any): SpecialReport {
   return {
     slug: s.slug,
     title: s.title,
     dek: s.dek,
-    image: s.image,
+    image: safeImageUrl(s.image),
     location: s.location,
     publishedAt: s.publishedAt || s.createdAt,
     chapters: s.chapters || [],
