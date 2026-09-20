@@ -38,7 +38,7 @@ export async function Footer() {
                     key={s.label}
                     href={s.href}
                     target="_blank"
-                    rel="noreferrer"
+                    rel="noopener noreferrer"
                     aria-label={s.label}
                     className="flex h-9 w-9 items-center justify-center rounded-full border border-border transition hover:border-brand hover:text-brand"
                   >
@@ -96,7 +96,7 @@ export async function Footer() {
         <div className="mt-4 text-center text-xs text-muted">
           Crafted by{" "}
           <a
-            href="https://jstechnova.com"
+            href="https://www.jstechnova.in"
             target="_blank"
             rel="noreferrer"
             className="font-semibold text-foreground transition hover:text-brand"

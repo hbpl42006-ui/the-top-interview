@@ -14,12 +14,13 @@ const ICONS: Record<string, React.ComponentType<{ size?: number }>> = {
 };
 
 const STATS: Record<string, string> = {
-  YouTube: "1.2M Subscribers",
-  Instagram: "845K Followers",
-  Facebook: "612K Followers",
-  "X / Twitter": "340K Followers",
-  "WhatsApp Channel": "210K Members",
-  Telegram: "98K Members",
+  YouTube: "Visit Channel",
+  Instagram: "Visit Profile",
+  Facebook: "Visit Page",
+  "Facebook Podcast India": "Visit Page",
+  "X / Twitter": "Visit Profile",
+  "WhatsApp Channel": "Visit Channel",
+  Telegram: "Visit Channel",
 };
 
 export async function FollowSection() {
@@ -39,7 +40,8 @@ export async function FollowSection() {
                 key={s.label}
                 href={s.href}
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
+                aria-label={`${s.label} — The Top Interview`}
                 className="group flex flex-col items-center gap-2 rounded-lg border border-border bg-surface p-5 text-center transition hover:border-brand hover:shadow-md"
               >
                 <span className="flex h-11 w-11 items-center justify-center rounded-full bg-surface-muted text-foreground transition group-hover:bg-brand group-hover:text-white">

@@ -84,9 +84,10 @@ export const CATEGORIES = [
 ] as const;
 
 export const SOCIAL_LINKS = [
-  { label: "YouTube", href: "https://youtube.com/@thetopinterview", icon: "youtube" },
-  { label: "Instagram", href: "https://instagram.com/thetopinterview", icon: "instagram" },
-  { label: "Facebook", href: "https://facebook.com/thetopinterview", icon: "facebook" },
+  { label: "YouTube", href: "https://www.youtube.com/@Thetopenterview", icon: "youtube" },
+  { label: "Instagram", href: "https://www.instagram.com/thetopinterview?stkn=eDJ0ZGYyZWlvb3Jv", icon: "instagram" },
+  { label: "Facebook", href: "https://www.facebook.com/profile.php?id=61563485900732", icon: "facebook" },
+  { label: "Facebook Podcast India", href: "https://www.facebook.com/profile.php?id=61578201522086", icon: "facebook" },
   { label: "X / Twitter", href: "https://x.com/thetopinterview", icon: "twitter" },
   { label: "WhatsApp Channel", href: "https://whatsapp.com/channel/thetopinterview", icon: "whatsapp" },
   { label: "Telegram", href: "https://t.me/thetopinterview", icon: "telegram" },

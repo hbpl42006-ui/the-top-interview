@@ -88,9 +88,9 @@ export default async function RootLayout({
     slogan: SITE.tagline,
     description: SITE.mission,
     sameAs: [
-      "https://youtube.com/@thetopinterview",
-      "https://instagram.com/thetopinterview",
-      "https://facebook.com/thetopinterview",
+      "https://www.youtube.com/@Thetopenterview",
+      "https://www.instagram.com/thetopinterview?stkn=eDJ0ZGYyZWlvb3Jv",
+      "https://www.facebook.com/profile.php?id=61563485900732",
       "https://x.com/thetopinterview",
     ],
   };
