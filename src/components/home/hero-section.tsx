@@ -21,7 +21,7 @@ export async function HeroSection() {
       <Container>
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
           <div className="lg:col-span-2">
-            <Link href={`/news/${lead.slug}`} className="group block">
+            <Link href={`/news/${lead.slug}`} prefetch={false} className="group block">
               <div className="relative aspect-[4/5] w-full overflow-hidden rounded-lg bg-charcoal sm:aspect-video">
                 <Image
                   src={lead.image}
@@ -64,6 +64,7 @@ export async function HeroSection() {
               </div>
               <Link
                 href={`/news/${lead.slug}`}
+                prefetch={false}
                 className="flex items-center gap-1 text-sm font-bold text-brand transition hover:gap-2"
               >
                 {dict.common.readFullStory} <ArrowRight size={15} />

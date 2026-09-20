@@ -37,6 +37,7 @@ export async function FromTheGroundSection() {
           </div>
           <Link
             href={`/ground-report/${report.slug}`}
+            prefetch={false}
             className="mt-8 inline-flex items-center gap-2 rounded-sm bg-brand px-6 py-3.5 text-sm font-extrabold uppercase tracking-wide text-white transition hover:bg-brand-dark"
           >
             <PlayCircle size={18} /> {dict.home.fromTheGround.watchButton}

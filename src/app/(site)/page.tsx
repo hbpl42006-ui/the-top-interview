@@ -18,21 +18,40 @@ export default function Home() {
   return (
     <>
       <HeroSection />
-      <FromTheGroundSection />
-      <LatestNewsSection />
+      <Suspense fallback={null}>
+        <FromTheGroundSection />
+      </Suspense>
+      <Suspense fallback={null}>
+        <LatestNewsSection />
+      </Suspense>
       <Container className="py-2">
         <AdSlot size="leaderboard" />
       </Container>
-      <GroundReportsSection />
-      <TopInterviewSection />
-      <VideosSection />
-      <PodcastSection />
-      <LocationSection />
-      <SpecialReportsSection />
-      <TrendingSection />
+      <Suspense fallback={null}>
+        <GroundReportsSection />
+      </Suspense>
+      <Suspense fallback={null}>
+        <TopInterviewSection />
+      </Suspense>
+      <Suspense fallback={null}>
+        <VideosSection />
+      </Suspense>
+      <Suspense fallback={null}>
+        <PodcastSection />
+      </Suspense>
+      <Suspense fallback={null}>
+        <LocationSection />
+      </Suspense>
+      <Suspense fallback={null}>
+        <SpecialReportsSection />
+      </Suspense>
+      <Suspense fallback={null}>
+        <TrendingSection />
+      </Suspense>
       <PublicVoiceSection />
       <NewsletterSection />
       <FollowSection />
     </>
   );
 }
+import { Suspense } from "react";

@@ -27,7 +27,7 @@ export async function SpecialReportsSection() {
         </div>
 
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-          <Link href={`/special-report/${main.slug}`} className="group lg:col-span-2">
+          <Link href={`/special-report/${main.slug}`} prefetch={false} className="group lg:col-span-2">
             <div className="relative aspect-[16/9] w-full overflow-hidden rounded-lg">
               <Image src={main.image} alt={main.title} fill className="object-cover transition duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 100vw, 66vw" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
@@ -40,7 +40,7 @@ export async function SpecialReportsSection() {
           </Link>
           <div className="flex flex-col gap-5">
             {rest.map((r) => (
-              <Link key={r.slug} href={`/special-report/${r.slug}`} className="group flex gap-4">
+              <Link key={r.slug} href={`/special-report/${r.slug}`} prefetch={false} className="group flex gap-4">
                 <div className="relative h-20 w-28 shrink-0 overflow-hidden rounded-md">
                   <Image src={r.image} alt={r.title} fill className="object-cover transition group-hover:scale-105" sizes="112px" />
                 </div>
