@@ -9,6 +9,7 @@ export function InterviewCard({ interview }: { interview: Interview }) {
   return (
     <Link
       href={`/interview/${interview.slug}`}
+      prefetch={false}
       className="group flex flex-col overflow-hidden rounded-lg border border-border bg-surface transition hover:border-brand hover:shadow-lg"
     >
       <div className="relative aspect-video w-full overflow-hidden bg-charcoal">

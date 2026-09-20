@@ -19,7 +19,7 @@ export async function NewsCard({
 
   if (variant === "compact") {
     return (
-      <Link href={href} className="group flex gap-3">
+      <Link href={href} prefetch={false} className="group flex gap-3">
         <div className="relative h-16 w-24 shrink-0 overflow-hidden rounded-sm bg-surface-muted">
           <Image src={article.image} alt={article.headline} fill className="object-cover transition duration-300 group-hover:scale-105" sizes="96px" />
         </div>
@@ -35,7 +35,7 @@ export async function NewsCard({
 
   if (variant === "horizontal") {
     return (
-      <Link href={href} className="group flex flex-col gap-3 sm:flex-row">
+      <Link href={href} prefetch={false} className="group flex flex-col gap-3 sm:flex-row">
         <div className="relative aspect-video w-full shrink-0 overflow-hidden rounded-md bg-surface-muted sm:w-56">
           <Image src={article.image} alt={article.headline} fill className="object-cover transition duration-300 group-hover:scale-105" sizes="224px" />
           {article.isBreaking && (
@@ -66,7 +66,7 @@ export async function NewsCard({
   }
 
   return (
-    <Link href={href} className={cn("group flex flex-col")}>
+    <Link href={href} prefetch={false} className={cn("group flex flex-col")}>
       <div className="relative aspect-[4/3] w-full overflow-hidden rounded-md bg-surface-muted">
         <Image
           src={article.image}

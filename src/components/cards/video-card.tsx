@@ -15,7 +15,7 @@ const CATEGORY_LABEL: Record<string, string> = {
 
 export function VideoCard({ video }: { video: Video }) {
   return (
-    <Link href={`/video/${video.slug}`} className="group flex flex-col">
+    <Link href={`/video/${video.slug}`} prefetch={false} className="group flex flex-col">
       <div className="relative aspect-video w-full overflow-hidden rounded-md bg-charcoal">
         <Image
           src={video.thumbnail}

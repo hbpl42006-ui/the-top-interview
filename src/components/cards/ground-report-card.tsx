@@ -8,6 +8,7 @@ export function GroundReportCard({ report }: { report: GroundReport }) {
   return (
     <Link
       href={`/ground-report/${report.slug}`}
+      prefetch={false}
       className="group flex flex-col overflow-hidden rounded-lg border border-border bg-surface transition hover:border-brand hover:shadow-lg"
     >
       <div className="relative aspect-video w-full overflow-hidden bg-charcoal">

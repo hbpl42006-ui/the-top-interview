@@ -13,7 +13,7 @@ export function PodcastCard({ episode, large = false }: { episode: PodcastEpisod
 
   return (
     <div className="group flex flex-col overflow-hidden rounded-lg border border-border bg-surface transition hover:border-brand hover:shadow-lg">
-      <Link href={`/podcast/${episode.slug}`} className="relative block aspect-square w-full overflow-hidden bg-charcoal">
+      <Link href={`/podcast/${episode.slug}`} prefetch={false} className="relative block aspect-square w-full overflow-hidden bg-charcoal">
         <Image
           src={episode.cover}
           alt={episode.title}
@@ -31,7 +31,7 @@ export function PodcastCard({ episode, large = false }: { episode: PodcastEpisod
       </Link>
       <div className="flex flex-1 flex-col gap-2 p-4">
         <span className="text-[11px] font-bold uppercase tracking-wide text-brand">{episode.category}</span>
-        <Link href={`/podcast/${episode.slug}`}>
+        <Link href={`/podcast/${episode.slug}`} prefetch={false}>
           <h3 className="line-clamp-2 font-serif text-base font-bold leading-snug transition hover:text-brand">
             {episode.title}
           </h3>
