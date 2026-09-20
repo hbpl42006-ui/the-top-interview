@@ -25,11 +25,9 @@ class StateSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def get_storyCount(self, obj):
-        from news.models import NewsArticle, GroundReport
-        city_ids = obj.cities.values_list('id', flat=True)
         return (
-            NewsArticle.objects.filter(city_id__in=city_ids, status='PUBLISHED').count() +
-            GroundReport.objects.filter(city_id__in=city_ids, status='PUBLISHED').count()
+            getattr(obj, 'published_article_count', 0)
+            + getattr(obj, 'published_ground_report_count', 0)
         )
 
 class SiteSettingSerializer(serializers.ModelSerializer):

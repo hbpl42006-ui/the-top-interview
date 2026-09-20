@@ -13,17 +13,36 @@ class ReporterViewSet(viewsets.ModelViewSet):
     filterset_fields = ['slug']
 
 class NewsArticleViewSet(viewsets.ModelViewSet):
-    queryset = NewsArticle.objects.all().order_by('-publishedAt')
+    queryset = (
+        NewsArticle.objects
+        .select_related('category', 'city', 'city__state', 'reporter')
+        .prefetch_related('tags')
+        .order_by('-publishedAt')
+    )
     serializer_class = NewsArticleSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     lookup_field = 'slug'
     filterset_fields = ['slug', 'isBreaking', 'isFeatured', 'category__name', 'city__state__name', 'reporter__slug']
 
+    def get_serializer_class(self):
+        if self.action == 'list':
+            from .serializers import NewsArticleListSerializer
+            return NewsArticleListSerializer
+        return NewsArticleSerializer
+
 class GroundReportViewSet(viewsets.ModelViewSet):
-    queryset = GroundReport.objects.all().order_by('-publishedAt')
+    queryset = GroundReport.objects.select_related(
+        'city', 'city__state', 'reporter'
+    ).order_by('-publishedAt')
     serializer_class = GroundReportSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     lookup_field = 'slug'
+
+    def get_serializer_class(self):
+        if self.action == 'list':
+            from .serializers import GroundReportListSerializer
+            return GroundReportListSerializer
+        return GroundReportSerializer
 
 class SpecialReportViewSet(viewsets.ModelViewSet):
     queryset = SpecialReport.objects.all().order_by('-publishedAt')

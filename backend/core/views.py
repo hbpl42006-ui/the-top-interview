@@ -1,4 +1,5 @@
 from rest_framework import viewsets, permissions
+from django.db.models import Count, Q
 from .models import Category, Tag, State, City, SiteSetting, SocialLink
 from .serializers import (
     CategorySerializer, TagSerializer, StateSerializer, 
@@ -17,7 +18,18 @@ class TagViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
 class StateViewSet(viewsets.ModelViewSet):
-    queryset = State.objects.all().order_by('name')
+    queryset = State.objects.annotate(
+        published_article_count=Count(
+            'cities__articles',
+            filter=Q(cities__articles__status='PUBLISHED'),
+            distinct=True,
+        ),
+        published_ground_report_count=Count(
+            'cities__groundReports',
+            filter=Q(cities__groundReports__status='PUBLISHED'),
+            distinct=True,
+        ),
+    ).prefetch_related('cities').order_by('name')
     serializer_class = StateSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     filterset_fields = ['slug']

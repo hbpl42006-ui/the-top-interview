@@ -48,10 +48,34 @@ class NewsArticleSerializer(serializers.ModelSerializer):
             return {'slug': obj.reporter.slug, 'name': obj.reporter.name}
         return None
 
+
+class NewsArticleListSerializer(NewsArticleSerializer):
+    """Card/list payload without the full article body and write-only fields."""
+
+    class Meta:
+        model = NewsArticle
+        fields = (
+            'id', 'slug', 'headline', 'subheadline', 'excerpt', 'image',
+            'videoUrl', 'status', 'contentLabel', 'factCheck', 'isBreaking',
+            'isFeatured', 'views', 'readMinutes', 'locationLabel',
+            'publishedAt', 'updatedAt', 'createdAt', 'category', 'tags',
+            'city', 'reporter',
+        )
+
 class GroundReportSerializer(serializers.ModelSerializer):
     class Meta:
         model = GroundReport
         fields = '__all__'
+
+
+class GroundReportListSerializer(GroundReportSerializer):
+    class Meta:
+        model = GroundReport
+        fields = (
+            'id', 'slug', 'headline', 'excerpt', 'image', 'videoUrl',
+            'duration', 'mapQuery', 'status', 'views', 'locationLabel',
+            'publishedAt', 'updatedAt', 'createdAt', 'city', 'reporter',
+        )
 
 class SpecialReportSerializer(serializers.ModelSerializer):
     class Meta:
